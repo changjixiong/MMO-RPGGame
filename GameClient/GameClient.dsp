@@ -94,6 +94,10 @@ SOURCE=.\GameClient.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\GameWorld.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\MyBitMap.cpp
 # End Source File
 # End Group

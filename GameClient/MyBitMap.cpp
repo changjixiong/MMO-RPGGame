@@ -1,6 +1,8 @@
 #include "MyBitMap.h"
+#include "GameWorld.h"
 
-MyBitMap::MyBitMap(HDC hdcScreen, const char * pzPic, bool bNeedTransparent)
+
+MyBitMap::MyBitMap(const char * pzPic, bool bNeedTransparent)
 {
 	bitOriginal		= NULL;
 	bitOldOriginal	= NULL;
@@ -17,7 +19,7 @@ MyBitMap::MyBitMap(HDC hdcScreen, const char * pzPic, bool bNeedTransparent)
 	Width	= 0;
 	Height	= 0;
 	
-	hdcOriginal=CreateCompatibleDC(hdcScreen);
+	hdcOriginal=CreateCompatibleDC(GameWorld::hdcScreen);
 	bitOriginal=(HBITMAP)LoadImage(NULL, pzPic, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE|LR_CREATEDIBSECTION);
 	bitOldOriginal=(HBITMAP)SelectObject(hdcOriginal, bitOriginal);
 	
@@ -30,11 +32,11 @@ MyBitMap::MyBitMap(HDC hdcScreen, const char * pzPic, bool bNeedTransparent)
 	if (bNeedTransparent)
 	{
 		
-		bitBlackBack=CreateCompatibleBitmap(hdcScreen, Width, Height);
+		bitBlackBack=CreateCompatibleBitmap(GameWorld::hdcScreen, Width, Height);
 		bitMask=CreateBitmap(Width, Height, 1, 1, NULL);
 		
-		hdcBlackBack=CreateCompatibleDC(hdcScreen);
-		hdcMask=CreateCompatibleDC(hdcScreen);
+		hdcBlackBack=CreateCompatibleDC(GameWorld::hdcScreen);
+		hdcMask=CreateCompatibleDC(GameWorld::hdcScreen);
 		
 		bitOldBlackBack=(HBITMAP)SelectObject(hdcBlackBack,bitBlackBack);
 		bitOldMask=(HBITMAP)SelectObject(hdcMask,bitMask);
@@ -72,10 +74,10 @@ MyBitMap::~MyBitMap()
 	}
 }
 
-void MyBitMap::Show(HDC hdcDest)
+void MyBitMap::Show(HDC hdcDest, int x, int y)
 {
 	BitBlt(hdcDest,
-			0,0,
+			x,y,
 			Width,Height,hdcOriginal,
 			0,0,
 			SRCCOPY);

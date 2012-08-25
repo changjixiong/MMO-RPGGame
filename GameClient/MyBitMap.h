@@ -1,16 +1,15 @@
 #ifndef MYBITMAP_HEAD
 #define MYBITMAP_HEAD
-
 #include <windows.h>
 
 class MyBitMap
 {
 public:
-	MyBitMap(HDC hdcScreen, const char * pzPic, bool bNeedTransparent);
+	MyBitMap(const char * pzPic, bool bNeedTransparent);
 	
 	~MyBitMap();
 
-	void Show(HDC hdcDest);
+	void Show(HDC hdcDest, int x, int y);
 	void Draw(HDC hdcDest, int x, int y);	
 
 	

@@ -14,6 +14,8 @@
 #define WINDOW_CLASS_NAME "WINCLASS1"
 
 // GLOBALS ////////////////////////////////////////////////
+GameWorld gameWorld;
+
 int AdjustWindow(HWND hwnd)
 {
 	RECT window_rect;
@@ -65,6 +67,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 				// return success
 				return(0);
    				} break;
+			case WM_TIMER:
+				gameWorld.Game_Main();
+				break;
 
 			case WM_DESTROY: 
 				{
@@ -129,22 +134,11 @@ int WINAPI WinMain(	HINSTANCE hinstance,
 
 	AdjustWindow(hwnd);
 
-// 	if (Game_Init()!=0)
-// 	{
-// 		MessageBox(hWnd,"Game_Init error","",MB_OK);
-// 		return 0;
-// 	}
-
-	HDC			hdcScreen = GetDC(hwnd);
-	MyBitMap	bitGround(hdcScreen, "./pic/map/ground.BMP", false);
-	MyBitMap	bitMan(hdcScreen, "./pic/man/c00000.bmp", true);
-		
-// 	HDC hdcScreen	= GetDC(hwnd);
-// 	HDC hdcGround	= CreateCompatibleDC(hdcScreen);
-// 
-// 	HBITMAP bitmap	= (HBITMAP)LoadImage(NULL,"./pic/map/ground.BMP",IMAGE_BITMAP,0,0,LR_LOADFROMFILE|LR_CREATEDIBSECTION);
-// 	HBITMAP bitOld	= (HBITMAP)SelectObject(hdcGround,bitmap);
-
+	if (gameWorld.Game_Init(hwnd)!=0)
+	{
+		MessageBox(hwnd,"Game_Init error","",MB_OK);
+		return 0;
+	}
 
 
 	// enter main event loop, but this time we use PeekMessage()
@@ -167,17 +161,12 @@ int WINAPI WinMain(	HINSTANCE hinstance,
     
 		// main game processing goes here
 		// Game_Main(); // or whatever your loop is called		
-		//BitBlt(hdcScreen, 0, 0, 640, 480, hdcGround, 0, 0, SRCCOPY);
-		bitGround.Show(hdcScreen);
-		bitMan.Draw(hdcScreen, 100, 100);
+		// move to WM_TIMER zone
 		
 		//
 		} // end while
 
-	//Game_Shutdown();	
-	//SelectObject(hdcGround, bitOld);
-	//DeleteObject(bitmap);
-	//DeleteDC(hdcGround);
+	gameWorld.Game_Shutdown();	
 
 	// return to Windows like this
 	return(msg.wParam);
