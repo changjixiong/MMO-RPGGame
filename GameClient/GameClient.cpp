@@ -136,8 +136,8 @@ int WINAPI WinMain(	HINSTANCE hinstance,
 // 	}
 
 	HDC			hdcScreen = GetDC(hwnd);
-	MyBitMap	bitGround(hdcScreen, "./pic/map/ground.BMP");
-	MyBitMap	bitMan(hdcScreen, "./pic/man/c00000.bmp");
+	MyBitMap	bitGround(hdcScreen, "./pic/map/ground.BMP", false);
+	MyBitMap	bitMan(hdcScreen, "./pic/man/c00000.bmp", true);
 		
 // 	HDC hdcScreen	= GetDC(hwnd);
 // 	HDC hdcGround	= CreateCompatibleDC(hdcScreen);
@@ -169,7 +169,7 @@ int WINAPI WinMain(	HINSTANCE hinstance,
 		// Game_Main(); // or whatever your loop is called		
 		//BitBlt(hdcScreen, 0, 0, 640, 480, hdcGround, 0, 0, SRCCOPY);
 		bitGround.Show(hdcScreen);
-		bitMan.Show(hdcScreen);
+		bitMan.Draw(hdcScreen, 100, 100);
 		
 		//
 		} // end while
