@@ -134,12 +134,16 @@ int WINAPI WinMain(	HINSTANCE hinstance,
 // 		MessageBox(hWnd,"Game_Init error","",MB_OK);
 // 		return 0;
 // 	}
-	
-	HDC hdcScreen	= GetDC(hwnd);
-	HDC hdcGround	= CreateCompatibleDC(hdcScreen);
 
-	HBITMAP bitmap	= (HBITMAP)LoadImage(NULL,"./pic/map/ground.BMP",IMAGE_BITMAP,0,0,LR_LOADFROMFILE|LR_CREATEDIBSECTION);
-	HBITMAP bitOld	= (HBITMAP)SelectObject(hdcGround,bitmap);
+	HDC			hdcScreen = GetDC(hwnd);
+	MyBitMap	bitGround(hdcScreen, "./pic/map/ground.BMP");
+	MyBitMap	bitMan(hdcScreen, "./pic/man/c00000.bmp");
+		
+// 	HDC hdcScreen	= GetDC(hwnd);
+// 	HDC hdcGround	= CreateCompatibleDC(hdcScreen);
+// 
+// 	HBITMAP bitmap	= (HBITMAP)LoadImage(NULL,"./pic/map/ground.BMP",IMAGE_BITMAP,0,0,LR_LOADFROMFILE|LR_CREATEDIBSECTION);
+// 	HBITMAP bitOld	= (HBITMAP)SelectObject(hdcGround,bitmap);
 
 
 
@@ -163,15 +167,17 @@ int WINAPI WinMain(	HINSTANCE hinstance,
     
 		// main game processing goes here
 		// Game_Main(); // or whatever your loop is called		
-		BitBlt(hdcScreen, 0, 0, 640, 480, hdcGround, 0, 0, SRCCOPY);
+		//BitBlt(hdcScreen, 0, 0, 640, 480, hdcGround, 0, 0, SRCCOPY);
+		bitGround.Show(hdcScreen);
+		bitMan.Show(hdcScreen);
 		
 		//
 		} // end while
 
 	//Game_Shutdown();	
-	SelectObject(hdcGround, bitOld);
-	DeleteObject(bitmap);
-	DeleteDC(hdcGround);
+	//SelectObject(hdcGround, bitOld);
+	//DeleteObject(bitmap);
+	//DeleteDC(hdcGround);
 
 	// return to Windows like this
 	return(msg.wParam);

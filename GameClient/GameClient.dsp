@@ -92,6 +92,10 @@ LINK32=link.exe
 
 SOURCE=.\GameClient.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=.\MyBitMap.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -99,6 +103,10 @@ SOURCE=.\GameClient.cpp
 # Begin Source File
 
 SOURCE=.\GameWorld.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\MyBitMap.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
