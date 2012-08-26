@@ -94,11 +94,19 @@ SOURCE=.\GameClient.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\GameMap.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\GameWorld.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\MyBitMap.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Sprite.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -106,11 +114,19 @@ SOURCE=.\MyBitMap.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\GameMap.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\GameWorld.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\MyBitMap.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Sprite.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

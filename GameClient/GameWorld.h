@@ -2,6 +2,8 @@
 #define GAMEWORLD_HEAD
 #include <windows.h>
 #include "MyBitMap.h"
+#include "Sprite.h"
+#include "GameMap.h"
 
 #define GAME_WIDTH 640
 #define GAME_HEIGHT 480
@@ -21,8 +23,10 @@ public:
 protected:
 
 private:
-	MyBitMap * pMap;
-	MyBitMap * pMan;
+	//MyBitMap * pMap;
+	//MyBitMap * pMan;
+	GameMap *pGameMap;
+	Sprite	*spMan;
 
 	HDC		hdcCanvas;
 	HBITMAP	bitCanvas;
