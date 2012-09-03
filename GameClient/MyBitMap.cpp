@@ -52,6 +52,9 @@ MyBitMap::MyBitMap(const char * pzPic, bool bNeedTransparent)
 		BitBlt(hdcBlackBack, 0, 0, Width, Height, hdcMask, 0, 0, SRCAND);
 		
 	}
+
+	offset_x	= 0;
+	offset_y	= 0;
 }
 MyBitMap::~MyBitMap()
 {
@@ -74,17 +77,45 @@ MyBitMap::~MyBitMap()
 	}
 }
 
-void MyBitMap::Show(HDC hdcDest, int x, int y)
+void MyBitMap::Show(HDC hdcDest, int x, int y, bool invert)
 {
+	if (invert)
+	{
+		x -= Width - offset_x;		
+	}
+	else
+	{
+		x -= offset_x;		
+	}
+
+	y -= offset_y;
+	
 	BitBlt(hdcDest,
-			x,y,
+			x, y ,
 			Width,Height,hdcOriginal,
 			0,0,
 			SRCCOPY);
 }
 
-void MyBitMap::Draw(HDC hdcDest, int x, int y)
+void MyBitMap::Draw(HDC hdcDest, int x, int y, bool invert)
 {
-	BitBlt(hdcDest, x, y, Width, Height, hdcMask, 0, 0, SRCAND);
-	BitBlt(hdcDest, x, y, Width, Height, hdcBlackBack, 0, 0, SRCPAINT);
+	if (invert)
+	{
+		x -= Width - offset_x;		
+	}
+	else
+	{
+		x -= offset_x;		
+	}
+	
+	y -= offset_y;
+
+	BitBlt(hdcDest, x , y , Width, Height, hdcMask, 0, 0, SRCAND);
+	BitBlt(hdcDest, x , y , Width, Height, hdcBlackBack, 0, 0, SRCPAINT);
+}
+
+void MyBitMap::SetOffSet(int x, int y)
+{
+	offset_x	= x;
+	offset_y	= y;
 }

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "Sprite.h"
+#include "GameWorld.h"
 
+const int DIRCOUNT = 8;
 
 //there arrays will be inited by the content from config file later.
 int man_anims[8][8] = { {0,1,2,3,4,3,2,1,},
@@ -35,6 +37,10 @@ Sprite::Sprite()
 
 	BitMapFrame	= -1;
 	animIndex	= 0;
+
+	pos_x	= GAME_WIDTH/2;
+	pos_y	= GAME_HEIGHT/2;
+
 }
 
 Sprite::~Sprite()
@@ -68,8 +74,12 @@ Sprite::~Sprite()
 
 int Sprite::Init()
 {	
-	Load_Frame(0, 5);
-	Load_Animation(0, 8, man_anims[0]);
+	Load_Frame(0, 40);
+
+	for (int i=0;i<DIRCOUNT;i++)
+	{
+		Load_Animation(i, 8, man_anims[i]);
+	}	
 
 	return 0;
 }
@@ -80,7 +90,7 @@ int Sprite::Load_Animation(int anim_index, int num_frames, int *sequence)
 
 	for (int i=0; i<num_frames; i++)
 	{
-		animations[anim_index][i] = man_anims[anim_index][i];
+		animations[anim_index][i] = sequence[i];
 	}
 	animations[anim_index][i] = -1;
 
@@ -90,11 +100,24 @@ int Sprite::Load_Animation(int anim_index, int num_frames, int *sequence)
 
 int Sprite::Load_Frame(int nFrom, int nCount)
 {
-	char sztemp[120];
+	char sztemp[120]={0};
+	int x=0,y=0;
 	for (int i=nFrom; i<nFrom+nCount; i++)
 	{
 		sprintf(sztemp,"./pic/man/C%05d.bmp",i);	
-		pBitMap[i] = new MyBitMap((const char*)sztemp, true);		
+		pBitMap[i] = new MyBitMap((const char*)sztemp, true);	
+		sprintf(sztemp,"./pic/man/C%05d.txt",i);
+		FILE *fp;
+		fp = fopen(sztemp,"r");
+		if (fp)
+		{
+			fscanf(fp,"%d,%d", &x, &y);
+				
+			pBitMap[i]->SetOffSet(x,y);
+
+			fclose(fp);
+			fp=NULL;
+		}		
 	}
 
 	return 0;
@@ -109,7 +132,74 @@ void Sprite::Animate()
 	}
 }
 
-void Sprite::Draw(HDC hdcDest, int x, int y)
+void Sprite::Draw(HDC hdcDest)
 {
-	pBitMap[animations[animIndex][BitMapFrame]]->Draw(hdcDest, x, y);
+	if (pBitMap[animations[animIndex][BitMapFrame]])
+	{
+		if (Dir == NORTHEAST || Dir == EAST || Dir == SOUTHEAST)
+		{
+			pBitMap[animations[animIndex][BitMapFrame]]->Draw(hdcDest, pos_x, pos_y, true);
+		}
+		else
+		{
+			pBitMap[animations[animIndex][BitMapFrame]]->Draw(hdcDest, pos_x, pos_y);
+		}
+		
+	}	
+}
+
+void Sprite::ChangeDir(int x, int y)
+{
+	if (x>pos_x)
+	{
+		if (y>pos_y)
+		{
+			Dir = SOUTHEAST;
+		}
+		else if (y<pos_y)
+		{
+			Dir = NORTHEAST;
+		}
+		else
+		{
+			Dir = EAST;
+		}
+
+	}
+	else if (x<pos_x)
+	{
+		if (y>pos_y)
+		{
+			Dir = SOUTHWEST;
+		}
+		else if (y<pos_y)
+		{
+			Dir = NORTHWEST;
+		}
+		else
+		{
+			Dir = WEST;
+		}
+	}
+	else
+	{
+		if (y>pos_y)
+		{
+			Dir = NORTH;
+		}
+		else if (y<pos_y)
+		{
+			Dir = EAST;
+		}
+	}
+
+	animIndex = Dir;
+
+	BitMapFrame = -1;
+
+}
+
+void Sprite::Move(int x, int y)
+{
+	ChangeDir(x, y);
 }

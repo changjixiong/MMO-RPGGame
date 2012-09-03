@@ -9,8 +9,9 @@ public:
 	
 	~MyBitMap();
 
-	void Show(HDC hdcDest, int x, int y);
-	void Draw(HDC hdcDest, int x, int y);	
+	void Show(HDC hdcDest, int x, int y, bool invert=false);
+	void Draw(HDC hdcDest, int x, int y, bool invert=false);	
+	void SetOffSet(int x, int y);
 
 	
 
@@ -29,6 +30,7 @@ protected:
 	
 	int Width, Height;
 private:
+	int offset_x, offset_y;
 };
 
 #endif

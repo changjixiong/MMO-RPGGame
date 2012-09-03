@@ -1,6 +1,8 @@
 #ifndef GAMEWORLD_HEAD
 #define GAMEWORLD_HEAD
 #include <windows.h>
+#include <string>
+#include <vector>
 #include "MyBitMap.h"
 #include "Sprite.h"
 #include "GameMap.h"
@@ -8,15 +10,18 @@
 #define GAME_WIDTH 640
 #define GAME_HEIGHT 480
 
+using namespace std;
 
 class GameWorld
 {
 public:
 	GameWorld();
 	~GameWorld();
-	int Game_Init(HWND hwnd);
-	int Game_Shutdown();
-	int Game_Main();	
+	int Init(HWND hwnd);
+	int Shutdown();
+	int Main();	
+
+	void SetMessage(const string &strMessage);
 
 	static HDC	hdcScreen;
 	static HWND	hwnd_window;
@@ -33,7 +38,8 @@ private:
 	HBITMAP	bitOldCanvas;
 
 private:
-	int Game_Refresh();
+	int Refresh();
+	string serverMessage;
 
 };
 

@@ -57,6 +57,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 				return(0);
 				} break;
 
+			case WM_LBUTTONDOWN:		
+				{
+					char szMessage[64]={0};
+					sprintf(szMessage, "[%d,%d]", LOWORD(lparam), HIWORD(lparam));
+					gameWorld.SetMessage(szMessage);
+				}
+				
+				break;
 			case WM_PAINT: 
 				{
 				// simply validate the window
@@ -68,7 +76,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 				return(0);
    				} break;
 			case WM_TIMER:
-				gameWorld.Game_Main();
+				gameWorld.Main();
 				break;
 
 			case WM_DESTROY: 
@@ -134,7 +142,7 @@ int WINAPI WinMain(	HINSTANCE hinstance,
 
 	AdjustWindow(hwnd);
 
-	if (gameWorld.Game_Init(hwnd)!=0)
+	if (gameWorld.Init(hwnd)!=0)
 	{
 		MessageBox(hwnd,"Game_Init error","",MB_OK);
 		return 0;
@@ -166,7 +174,7 @@ int WINAPI WinMain(	HINSTANCE hinstance,
 		//
 		} // end while
 
-	gameWorld.Game_Shutdown();	
+	gameWorld.Shutdown();	
 
 	// return to Windows like this
 	return(msg.wParam);

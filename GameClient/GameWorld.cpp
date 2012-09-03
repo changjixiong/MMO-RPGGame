@@ -12,7 +12,7 @@ GameWorld::~GameWorld()
 {
 }
 
-int GameWorld::Game_Init(HWND hwnd)
+int GameWorld::Init(HWND hwnd)
 {
 	hwnd_window = hwnd;
 	hdcScreen	= GetDC(hwnd);
@@ -21,9 +21,6 @@ int GameWorld::Game_Init(HWND hwnd)
 
 	bitCanvas	= CreateCompatibleBitmap(hdcScreen, GAME_WIDTH, GAME_HEIGHT);
 	bitOldCanvas= (HBITMAP)SelectObject(hdcCanvas, bitCanvas);
-
-	//pMap	= new MyBitMap("./pic/map/ground.BMP", false);
-	//pMan	= new MyBitMap("./pic/man/C00000.BMP", true);
 
 	spMan		= new Sprite();
 	spMan->Init();
@@ -35,7 +32,7 @@ int GameWorld::Game_Init(HWND hwnd)
 	return 0;
 }
 
-int GameWorld::Game_Shutdown()
+int GameWorld::Shutdown()
 {
 	SelectObject(hdcCanvas, bitOldCanvas);
 	DeleteObject(bitCanvas);
@@ -49,23 +46,37 @@ int GameWorld::Game_Shutdown()
 	return 0;
 }
 
-int GameWorld::Game_Main()
+int GameWorld::Main()
 {
-	//pMap->Show(hdcCanvas, 0, 0);
-	//pMan->Draw(hdcCanvas, 100, 100);
+
+	if (serverMessage.length()>0)
+	{
+		int x,y;
+			
+		sscanf(serverMessage.c_str(),"[%d,%d]", &x, &y);
+		char szmessage[64]={0};
+		sprintf(szmessage, "[%d,%d]", x, y);
+		spMan->Move(x,y);
+		serverMessage = "";
+	}
 
 	pGameMap->Draw(hdcCanvas, 0, 0);
-
+	
 	spMan->Animate();
-	spMan->Draw(hdcCanvas, 100, 100);
+	spMan->Draw(hdcCanvas);
 
-	Game_Refresh();
+	Refresh();
 	
 	return 0;
 }
 
-int GameWorld::Game_Refresh()
+int GameWorld::Refresh()
 {
 	BitBlt(hdcScreen, 0, 0, GAME_WIDTH, GAME_HEIGHT, hdcCanvas, 0, 0, SRCCOPY);
 	return 0;
+}
+
+void GameWorld::SetMessage(const string &strMessage)
+{
+	serverMessage = strMessage;
 }
