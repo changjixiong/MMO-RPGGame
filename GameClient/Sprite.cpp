@@ -22,9 +22,12 @@ int man_walk[8][10] = {{40,41,42,43,44,45,46,47,48,49},
 						{60,61,62,63,64,65,66,67,68,69},
 						{70,71,72,73,74,75,76,77,78,79},
 						{80,81,82,83,84,85,86,87,88,89},
-						{90,91,92,93,94,95,96,97,98,99},
-						{100,101,102,103,104,105,106,107,108,109},
-						{110,111,112,113,114,115,116,117,118,119},};
+						{70,71,72,73,74,75,76,77,78,79},
+						{60,61,62,63,64,65,66,67,68,69},
+						{50,51,52,53,54,55,56,57,58,59},};
+// 						{90,91,92,93,94,95,96,97,98,99},
+// 						{100,101,102,103,104,105,106,107,108,109},
+// 						{110,111,112,113,114,115,116,117,118,119},};
 
 Sprite::Sprite()
 {
@@ -43,6 +46,8 @@ Sprite::Sprite()
 
 	pos_x	= GAME_WIDTH/2;
 	pos_y	= GAME_HEIGHT/2;
+
+	action = STAND;
 
 }
 
@@ -77,12 +82,17 @@ Sprite::~Sprite()
 
 int Sprite::Init()
 {	
-	Load_Frame(0, 25);
+	Load_Frame(0, 90);
 
 	for (int i=0;i<DIRCOUNT;i++)
 	{
-		Load_Animation(i, 8, man_anims[i]);
-	}	
+		Load_Animation(STAND+i, 8, man_anims[i]);
+	}
+	
+	for (i=0;i<DIRCOUNT;i++)
+	{
+		Load_Animation(WALK+i, 10, man_walk[i]);
+	}
 
 	return 0;
 }
@@ -131,7 +141,8 @@ void Sprite::Animate()
 	BitMapFrame++;
 	if (animations[animIndex][BitMapFrame] == -1)
 	{
-		BitMapFrame	= 0;
+		ChangeAction(STAND);
+		BitMapFrame = 0;
 	}
 }
 
@@ -196,13 +207,22 @@ void Sprite::ChangeDir(int x, int y)
 		}
 	}
 
-	animIndex = Dir;
-
+	animIndex = action + Dir;
 	BitMapFrame = -1;
 
 }
 
 void Sprite::Move(int x, int y)
 {
-	ChangeDir(x, y);
+	if (x != pos_x || y != pos_y)
+	{
+		ChangeAction(WALK);
+		ChangeDir(x, y);		
+	}	
+}
+
+void Sprite::ChangeAction(enum Action act)
+{	
+	action = act;
+	animIndex = action + Dir;
 }

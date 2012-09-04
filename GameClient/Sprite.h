@@ -18,6 +18,12 @@ enum DIR
 			SOUTHEAST,
 };
 
+enum Action
+{
+	STAND=0,
+	WALK=8,
+};
+
 class Sprite
 {
 public:
@@ -31,6 +37,7 @@ protected:
 	int Load_Frame(int nFrom, int nCount);
 	int Load_Animation(int anim_index, int num_frames, int *sequence);
 	void ChangeDir(int x, int y);
+	void ChangeAction(enum Action act);
 private:
 
 	int *animations[MAX_SPRITE_ANIMATIONS];
@@ -39,6 +46,7 @@ private:
 	int BitMapFrame;
 	int animIndex;
 	int pos_x, pos_y;
+	enum Action action;
 	enum DIR Dir;
 
 };
