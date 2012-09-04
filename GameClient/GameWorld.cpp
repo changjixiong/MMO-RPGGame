@@ -4,6 +4,9 @@
 HDC		GameWorld::hdcScreen	= NULL;
 HWND	GameWorld::hwnd_window	= NULL;
 
+const int stepLen_x = 20;
+const int stepLen_y = 15;
+
 GameWorld::GameWorld()
 {
 }
@@ -48,12 +51,12 @@ int GameWorld::Shutdown()
 
 int GameWorld::Main()
 {
-
 	if (serverMessage.length()>0)
 	{
 		int x,y;
 			
-		sscanf(serverMessage.c_str(),"[%d,%d]", &x, &y);
+		sscanf(serverMessage.c_str(),"[%d,%d]", &x, &y);		
+		FixToGrid(x, y);
 		char szmessage[64]={0};
 		sprintf(szmessage, "[%d,%d]", x, y);
 		spMan->Move(x,y);
@@ -79,4 +82,10 @@ int GameWorld::Refresh()
 void GameWorld::SetMessage(const string &strMessage)
 {
 	serverMessage = strMessage;
+}
+
+void GameWorld::FixToGrid(int & x, int & y)
+{
+	x = ((x + stepLen_x/2)/stepLen_x)*stepLen_x;
+	y = ((y + stepLen_y/2)/stepLen_y)*stepLen_y;
 }

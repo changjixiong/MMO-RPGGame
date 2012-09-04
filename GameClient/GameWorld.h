@@ -39,6 +39,7 @@ private:
 
 private:
 	int Refresh();
+	void FixToGrid(int & x, int & y);
 	string serverMessage;
 
 };
