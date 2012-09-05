@@ -1,6 +1,7 @@
 #ifndef GAMEMAP_HEAD
 #define GAMEMAP_HEAD
 
+#include "GameWorld.h"
 #include "MyBitMap.h"
 
 class GameMap
@@ -10,9 +11,11 @@ public:
 	~GameMap();
 
 	int Init();
-	int Draw(HDC hdcDest, int x, int y);
+	int Draw(HDC hdcDest);
+	void MoveViewport(int roleX, int roleY);
 protected:
 	MyBitMap * pMap;
+
 private:
 };
 

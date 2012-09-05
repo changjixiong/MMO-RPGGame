@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "Sprite.h"
-#include "GameWorld.h"
 
 const int DIRCOUNT = 8;
 
@@ -13,9 +12,7 @@ int man_anims[8][8] = { {0,1,2,3,4,3,2,1,},
 						{15,16,17,18,19,18,17,16,},
 						{10,11,12,13,14,13,12,11,},
 						{5,6,7,8,9,8,7,6,},};
-// 						{25,26,27,28,29,28,27,26,},
-// 						{30,31,32,33,34,33,32,31,},
-// 						{35,36,37,38,39,38,37,36,},};
+
 
 int man_walk[8][10] = {{40,41,42,43,44,45,46,47,48,49},
 						{50,51,52,53,54,55,56,57,58,59},
@@ -25,9 +22,6 @@ int man_walk[8][10] = {{40,41,42,43,44,45,46,47,48,49},
 						{70,71,72,73,74,75,76,77,78,79},
 						{60,61,62,63,64,65,66,67,68,69},
 						{50,51,52,53,54,55,56,57,58,59},};
-// 						{90,91,92,93,94,95,96,97,98,99},
-// 						{100,101,102,103,104,105,106,107,108,109},
-// 						{110,111,112,113,114,115,116,117,118,119},};
 
 Sprite::Sprite()
 {
@@ -47,8 +41,8 @@ Sprite::Sprite()
 	pos_x	= GAME_WIDTH/2;
 	pos_y	= GAME_HEIGHT/2;
 
-	action = STAND;
-
+	action	= STAND;
+	Dir		= SOUTH;
 }
 
 Sprite::~Sprite()
@@ -144,6 +138,12 @@ void Sprite::Animate()
 		ChangeAction(STAND);
 		BitMapFrame = 0;
 	}
+
+	if (action == WALK)
+	{
+		MovePos();
+	}	
+
 }
 
 void Sprite::Draw(HDC hdcDest)
@@ -152,11 +152,11 @@ void Sprite::Draw(HDC hdcDest)
 	{
 		if (Dir == NORTHEAST || Dir == EAST || Dir == SOUTHEAST)
 		{
-			pBitMap[animations[animIndex][BitMapFrame]]->Draw(hdcDest, pos_x, pos_y, true);
+			pBitMap[animations[animIndex][BitMapFrame]]->Draw(hdcDest, pos_x - ViewportPos_x, pos_y - ViewportPos_y, true);
 		}
 		else
 		{
-			pBitMap[animations[animIndex][BitMapFrame]]->Draw(hdcDest, pos_x, pos_y);
+			pBitMap[animations[animIndex][BitMapFrame]]->Draw(hdcDest, pos_x - ViewportPos_x, pos_y - ViewportPos_y);
 		}
 		
 	}	
@@ -164,44 +164,85 @@ void Sprite::Draw(HDC hdcDest)
 
 void Sprite::ChangeDir(int x, int y)
 {
-	if (x>pos_x)
+	int dx = x - pos_x;
+	int dy = y- pos_y;
+
+	if (dx > 0)
 	{
-		if (y>pos_y)
-		{
-			Dir = SOUTHEAST;
-		}
-		else if (y<pos_y)
-		{
-			Dir = NORTHEAST;
-		}
-		else
+		//abs(dy)/dx < stepLen_y/(3*stepLen_x)  =>  abs(dy)*(3*stepLen_x) < stepLen_y*dx
+		if (abs(dy)*(3*stepLen_x) < stepLen_y*dx)
 		{
 			Dir = EAST;
 		}
-
-	}
-	else if (x<pos_x)
-	{
-		if (y>pos_y)
-		{
-			Dir = SOUTHWEST;
-		}
-		else if (y<pos_y)
-		{
-			Dir = NORTHWEST;
-		}
 		else
+		{
+			if (abs(dy)*stepLen_x > 4*stepLen_y*dx)
+			{
+				if (dy>0)
+				{
+					Dir = SOUTH;
+				}
+				else
+				{
+					Dir = NORTH;
+				}				
+			}
+			else
+			{
+				if (dy>0)
+				{
+					Dir = SOUTHEAST;
+				}
+				else
+				{
+					Dir = NORTHEAST;
+				}
+				
+			}
+		}
+	}
+	else if (dx < 0)
+	{
+		if (abs(dy)*(3*stepLen_x) < stepLen_y*abs(dx))
 		{
 			Dir = WEST;
 		}
+		else 
+		{
+			if (abs(dy)*stepLen_x > 4*stepLen_y*abs(dx))
+			{
+				if (dy > 0)
+				{
+					Dir = SOUTH;
+				}
+				else
+				{
+					Dir = NORTH;
+				}
+				
+			}
+			else
+			{
+				if (dy > 0)
+				{
+					Dir = SOUTHWEST;
+				}
+				else
+				{
+					Dir = NORTHWEST;
+				}
+			}
+			
+		}
+		
 	}
 	else
 	{
-		if (y>pos_y)
+		if (dy > 0)
 		{
 			Dir = SOUTH;
 		}
-		else if (y<pos_y)
+		else if (dy < 0)
 		{
 			Dir = NORTH;
 		}
@@ -226,3 +267,49 @@ void Sprite::ChangeAction(enum Action act)
 	action = act;
 	animIndex = action + Dir;
 }
+
+enum Action Sprite::GetAction() const
+{
+	return action;
+};
+
+enum DIR Sprite::GetDir() const
+{
+	return Dir;
+};
+
+void Sprite::MovePos()
+{
+	switch (Dir)
+	{
+	case SOUTH:		
+	case SOUTHEAST:
+	case SOUTHWEST:
+		pos_y = (pos_y/stepLen_y)*stepLen_y + (BitMapFrame + 1)*stepLen_y/walkFrames;
+	};
+	
+	switch (Dir)
+	{
+	case NORTH:		
+	case NORTHEAST:
+	case NORTHWEST:
+		pos_y =  ((pos_y + stepLen_y -1)/stepLen_y)*stepLen_y - (BitMapFrame + 1)*stepLen_y/walkFrames ;
+	};
+	
+	switch (Dir)
+	{
+	case EAST:
+	case NORTHEAST:
+	case SOUTHEAST:
+		pos_x = (pos_x/stepLen_x)*stepLen_x + (BitMapFrame + 1)*stepLen_x/walkFrames;
+	};
+	
+	switch (Dir)
+	{
+	case WEST:
+	case NORTHWEST:
+	case SOUTHWEST:
+		pos_x = ((pos_x + stepLen_x -1)/stepLen_x)*stepLen_x -  (BitMapFrame + 1)*stepLen_x/walkFrames ;
+	};
+	
+};
