@@ -1,5 +1,6 @@
 #ifndef MYBITMAP_HEAD
 #define MYBITMAP_HEAD
+#define  WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 class MyBitMap

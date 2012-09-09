@@ -1,11 +1,14 @@
 #ifndef GAMEWORLD_HEAD
 #define GAMEWORLD_HEAD
+#define WIN32_LEAN_AND_MEAN  // just say no to MFC
+
 #include <windows.h>
 #include <string>
 #include <vector>
 #include "MyBitMap.h"
 #include "Sprite.h"
 #include "GameMap.h"
+#include "Socket/SocketLibSocket.h"
 
 #define GAME_WIDTH 640
 #define GAME_HEIGHT 480
@@ -50,8 +53,7 @@ public:
 	int Init(HWND hwnd);
 	int Shutdown();
 	int Main();	
-
-	void SetMessage(const string &strMessage);
+	void SetMessageFromInput(UINT msg, int x, int y);	
 
 	static HDC	hdcScreen;
 	static HWND	hwnd_window;
@@ -70,9 +72,9 @@ private:
 private:
 	int Refresh();
 	void FixToGrid(int & x, int & y);
-	string serverMessage;
-	vector<string> vecDebugMessage;
 
+	vector<string> vecDebugMessage;
+	SocketLib::DataSocket datasock;
 };
 
 

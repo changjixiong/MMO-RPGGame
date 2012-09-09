@@ -133,5 +133,37 @@ SOURCE=.\Sprite.h
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # End Group
+# Begin Group "Socket"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\Socket\SocketLibErrors.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Socket\SocketLibErrors.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Socket\SocketLibSocket.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Socket\SocketLibSocket.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Socket\SocketLibSystem.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Socket\SocketLibSystem.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Socket\SocketLibTypes.h
+# End Source File
+# End Group
 # End Target
 # End Project

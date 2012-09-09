@@ -19,6 +19,9 @@ public:
 	int GetY(){return pos_y;}
 	enum Action GetAction() const;
 	enum DIR	GetDir() const;
+	int GetFrameNum() const {return BitMapFrame;}
+	int AnimationBegin() const {return BitMapFrame==0;}
+	
 
 protected:
 	int Load_Frame(int nFrom, int nCount);
@@ -31,11 +34,15 @@ private:
 	int *animations[MAX_SPRITE_ANIMATIONS];
 	MyBitMap *pBitMap[MAX_SPRITE_FRAMES];
 
-	int BitMapFrame;
+	
 	int animIndex;
 	int pos_x, pos_y;
 	enum Action action;
 	enum DIR Dir;
+
+	int anim_counter;
+	int anim_count_max;
+	int BitMapFrame;
 
 };
 

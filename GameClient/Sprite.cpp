@@ -43,6 +43,9 @@ Sprite::Sprite()
 
 	action	= STAND;
 	Dir		= SOUTH;
+
+	anim_counter	= 0;
+	anim_count_max	= 2;
 }
 
 Sprite::~Sprite()
@@ -132,18 +135,30 @@ int Sprite::Load_Frame(int nFrom, int nCount)
 
 void Sprite::Animate()
 {
-	BitMapFrame++;
-	if (animations[animIndex][BitMapFrame] == -1)
+	if (BitMapFrame== -1)
 	{
-		ChangeAction(STAND);
 		BitMapFrame = 0;
+		++anim_counter;
 	}
-
-	if (action == WALK)
+	else
 	{
-		MovePos();
-	}	
-
+		if (++anim_counter>=anim_count_max)
+		{	
+			BitMapFrame++;
+			if (animations[animIndex][BitMapFrame] == -1)
+			{
+				ChangeAction(STAND);
+				BitMapFrame = 0;
+			}
+			
+			if (action == WALK)
+			{
+				MovePos();
+			}	
+			
+			anim_counter = 0;
+ 		}
+	}
 }
 
 void Sprite::Draw(HDC hdcDest)
@@ -313,3 +328,4 @@ void Sprite::MovePos()
 	};
 	
 };
+

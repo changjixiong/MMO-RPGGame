@@ -57,12 +57,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd,
 				return(0);
 				} break;
 
-			case WM_LBUTTONDOWN:		
-				{
-					char szMessage[64]={0};
-					sprintf(szMessage, "[%d,%d]", LOWORD(lparam)+ViewportPos_x, HIWORD(lparam)+ViewportPos_y);
-					gameWorld.SetMessage(szMessage);
-				}
+			case WM_LBUTTONDOWN:
+				gameWorld.SetMessageFromInput(WM_LBUTTONDOWN, LOWORD(lparam), HIWORD(lparam));
 				
 				break;
 			case WM_PAINT: 
