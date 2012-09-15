@@ -58,6 +58,8 @@ int GameWorld::Init(HWND hwnd)
 	
 	::SetTimer(hwnd_window, 1, 16, NULL);
 	SetBkMode(hdcCanvas,TRANSPARENT);
+
+	datasock.Send("[utest,pTest]", strlen("[utest,pTest]"));
 	
 	return 0;
 }
