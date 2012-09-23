@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <string>
 #include <vector>
+#include <map>
 #include "MyBitMap.h"
 #include "Sprite.h"
 #include "GameMap.h"
@@ -41,8 +42,12 @@ enum DIR
 
 enum Action
 {
-	STAND=0,
+	STAND=0,	
 	WALK=8,
+
+	SPRITEINITROLE =1,
+	SPRITEINITPLAYER =2,
+	SPRITEDESTORYPLAYER=3,
 };
 
 class GameWorld
@@ -58,7 +63,6 @@ public:
 	static HDC	hdcScreen;
 	static HWND	hwnd_window;
 protected:
-	void PushDebugMessage(char * pzMessage);
 
 private:
 
@@ -71,10 +75,16 @@ private:
 
 private:
 	int Refresh();
-	void FixToGrid(int & x, int & y);
+	void FixToGrid(Sprite * spMan, int & x, int & y);
+	int HandleMsg();	
+	int DebugOut();
+	int SendMsg(const string & strMsg);
+	int Login();
 
 	vector<string> vecDebugMessage;
+	vector<Sprite *> vecPplayer;
 	SocketLib::DataSocket datasock;
+	string severMessageBuffer;
 };
 
 

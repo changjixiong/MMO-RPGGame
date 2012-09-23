@@ -1,5 +1,12 @@
 import socket,select
 import time
+
+actionDic={'SPRITEINITROLE':'1',
+            'SPRITEINITPLAYER':'2',
+           'SPRITEDESTORYPLAYER':'3',
+            'STAND':'0',	
+            'WALK':'8',}
+
 class ListeningManager:
     def __init__(self,connectionManager):
         self.cm=connectionManager
@@ -29,7 +36,6 @@ class ConnectionManager:
         print 'a new connection come'
         self.datasockList.append(clientsock)
         conn = Connection(clientsock)
-        #conn.SetBlocking( false )
         self.connectionList.append(conn)
         conn.addHandler(HandlerLogon())
         
@@ -66,6 +72,10 @@ class Connection:
         self.databuffer=''
         self.sock = sock
         self.closed = False
+        self.role = None
+
+    def initRole(self, roleName):
+        self.role = Role(self, roleName)
 
     def handler(self):
         if len(self.handlerList)==0:
@@ -81,8 +91,11 @@ class Connection:
         self.databuffer+=data
         
     def sendBuffer(self):
-        if self.closed == False:
+        if self.closed == False:            
             len=self.sock.send(self.databuffer)
+            if len>0 and self.role is not None:
+                print self.role.id, 'send',self.databuffer[0:len]
+                self.role.x, self.role.y = self.databuffer[0:len-1].split(',')[2:4]
             self.databuffer=self.databuffer[len:]
         
     def receive(self):
@@ -104,31 +117,60 @@ class Connection:
         if len(self.handlerList)>0:
             self.handler().enter(self)
 
+    def sendOthers(self, data):
+        for item in self.role.roleDB.roleDic.values():
+            if item[0] is not None and item[0] is not self:
+                item[0].translator.sendString(item[0], data)
+
     def close(self):
         self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
         self.closed = True
+
+        if self.role is not None:
+            self.sendOthers(str(self.role.id)+','+actionDic['SPRITEDESTORYPLAYER']+',0,0') 
+            self.role.roleDB.removeRole(self.role)
+            self.role=None
  
-class HandlerLogon:#public ConnectionHandler
+class HandlerLogon:
     def handle(self, connection, data):
-        #add user
-        print data.split(',')[0],'come'
-        connection.removeHandler()
-        connection.addHandler(HandlerLogic())
+        try:
+            datalist = data.split(',')
+            if datalist[0] not in Role.roleDB.roleDic:
+                Role.roleDB.roleDic[datalist[0]]=[None,32*5,24*5]
+
+            if Role.roleDB.roleDic[datalist[0]][0] is not None:
+                print 'user is online'
+                connection.translator.sendString(connection, 'user is online')
+            else:                
+                connection.initRole(data.split(',')[0])
+                connection.translator.sendString(connection, connection.role.pos('SPRITEINITROLE'))
+                connection.removeHandler()
+                connection.addHandler(HandlerLogic())
+        except Exception,x:
+            print x
+
     def enter(self, connection):
-        connection.translator.sendString(connection, '')
+        connection.translator.sendString(connection, 'username,password')
     def leave(self,connection):
         pass
     
 class HandlerLogic:
     def handle(self, connection,data):
         #deal
-        msg = '['+data+']'
-        print msg
-        connection.translator.sendString(connection, msg)
+        msg = data
+        msgList=msg[1:-1].split(',')
+        for item in connection.role.roleDB.roleDic.values():
+            if item[0] is not None:
+                item[0].translator.sendString(item[0], msg)
     
     def enter(self, connection):
-        pass
+        for item in connection.role.roleDB.roleDic.values():
+            if item[0] is not None and item[0] is not connection:
+                item[0].translator.sendString(item[0], connection.role.pos('SPRITEINITPLAYER'))
+                connection.translator.sendString(connection, item[0].role.pos('SPRITEINITPLAYER'))
+        
+                
     def leave(self,connection):
         pass
     
@@ -142,9 +184,36 @@ class Translator:
         #databuffer+=remain
         conn.handler().handle(conn, msg)
     def sendString(self, conn, data):
-        conn.bufferData(data)
+        conn.bufferData('['+data+']')
 
+class RoleDB:
+    roleDic={}
+    def __init__(self):
+        # these three users are for test
+        # roleDic will be inited by user data file
+        #RoleDB.roleDic['role1']=[None,32*2,24*2]
+        pass
+    def removeRole(self,role):
+        RoleDB.roleDic[role.name][0]=None
+        
+class Role:
+    roleDB = RoleDB()
+    roleID = 0
+    def __init__(self, connection, name):
+        Role.roleID+=1
+        Role.roleDB.roleDic[name][0]=connection
+
+        self.id  = Role.roleID
+        self.name=name        
+        self.x = self.roleDB.roleDic[self.name][1]
+        self.y = self.roleDB.roleDic[self.name][2]
+ 
+    def pos(self, typeName):
+        global actionDic
+        return str(self.id)+','+actionDic[typeName]+','+str(self.x)+','+str(self.y)
+        
 def main():
+
     connectM = ConnectionManager()
     listenM = ListeningManager(connectM)
 

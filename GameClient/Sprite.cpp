@@ -38,14 +38,21 @@ Sprite::Sprite()
 	BitMapFrame	= -1;
 	animIndex	= 0;
 
-	pos_x	= GAME_WIDTH/2;
-	pos_y	= GAME_HEIGHT/2;
+ 	pos_x	= -1;
+ 	pos_y	= -1;	
 
 	action	= STAND;
 	Dir		= SOUTH;
 
 	anim_counter	= 0;
 	anim_count_max	= 2;
+
+	id=0;
+}
+
+Sprite::Sprite(const Sprite & sprite)
+{
+
 }
 
 Sprite::~Sprite()
@@ -77,8 +84,12 @@ Sprite::~Sprite()
 	}
 }
 
-int Sprite::Init()
+int Sprite::Init(const char * szData)
 {	
+
+	int action;
+	sscanf(szData,"[%d, %d,%d,%d]", &id, &action, &pos_x, &pos_y);	
+
 	Load_Frame(0, 90);
 
 	for (int i=0;i<DIRCOUNT;i++)
@@ -173,6 +184,10 @@ void Sprite::Draw(HDC hdcDest)
 		{
 			pBitMap[animations[animIndex][BitMapFrame]]->Draw(hdcDest, pos_x - ViewportPos_x, pos_y - ViewportPos_y);
 		}
+
+		char szRoleInof[32]={0};
+		sprintf(szRoleInof,"ID:%d, pos[%d,%d]", id, pos_x, pos_y);
+		TextOut(hdcDest, pos_x - 40 - ViewportPos_x,pos_y - 50 - ViewportPos_y,szRoleInof,strlen(szRoleInof));
 		
 	}	
 }
@@ -277,18 +292,18 @@ void Sprite::Move(int x, int y)
 	}	
 }
 
-void Sprite::ChangeAction(enum Action act)
+void Sprite::ChangeAction(Action act)
 {	
 	action = act;
 	animIndex = action + Dir;
 }
 
-enum Action Sprite::GetAction() const
+Action Sprite::GetAction() const
 {
 	return action;
 };
 
-enum DIR Sprite::GetDir() const
+DIR Sprite::GetDir() const
 {
 	return Dir;
 };

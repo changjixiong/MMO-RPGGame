@@ -107,6 +107,8 @@ int WINAPI WinMain(	HINSTANCE hinstance,
 	winclass.cbSize         = sizeof(WNDCLASSEX);
 	winclass.style			= CS_DBLCLKS | CS_OWNDC | 
 							  CS_HREDRAW | CS_VREDRAW;
+
+
 	winclass.lpfnWndProc	= WindowProc;
 	winclass.cbClsExtra		= 0;
 	winclass.cbWndExtra		= 0;
@@ -126,7 +128,7 @@ int WINAPI WinMain(	HINSTANCE hinstance,
 	if (!(hwnd = CreateWindowEx(NULL,                  // extended style
 								WINDOW_CLASS_NAME,     // class
 								"Your Basic Window++", // title
-								WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+								(WS_OVERLAPPEDWINDOW | WS_VISIBLE) & ~WS_MAXIMIZEBOX & ~WS_THICKFRAME,
 								(GetSystemMetrics(SM_CXSCREEN) - GAME_WIDTH)/2,
 								(GetSystemMetrics(SM_CYSCREEN) - GAME_HEIGHT)/2, 
 								GAME_WIDTH,GAME_HEIGHT,  // initial width, height
