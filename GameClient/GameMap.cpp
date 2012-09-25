@@ -1,5 +1,9 @@
 #include "GameMap.h"
 
+const int miniMap_Width		= 160;
+const int miniMap_Height	= 120;
+
+
 GameMap::GameMap()
 {
 
@@ -12,11 +16,33 @@ GameMap::~GameMap()
 		delete pMap;
 		pMap = NULL;
 	}
+
+	SelectObject(hdcMiniMap, bitOldMiniMap);
+	DeleteObject(bitMiniMap);
+	DeleteDC(hdcMiniMap);
 }
 
-int GameMap::Init()
+int GameMap::Init(HDC hdcScreen)
 {
 	pMap	= new MyBitMap("./pic/map/ground.BMP", false);
+
+	hdcMiniMap	= CreateCompatibleDC(hdcScreen);
+
+	bitMiniMap	= CreateCompatibleBitmap(hdcScreen, miniMap_Width, miniMap_Height);
+	bitOldMiniMap= (HBITMAP)SelectObject(hdcMiniMap, bitMiniMap);
+
+	
+	SetStretchBltMode( hdcMiniMap,  HALFTONE );
+	for (int i=0;i<4;i++)
+	{
+		for (int j=0;j<4;j++)
+		{
+			pMap->StretchDraw(hdcMiniMap, 
+				i*GAME_WIDTH/16, j*GAME_HEIGHT/16,
+				GAME_WIDTH/16, GAME_HEIGHT/16);
+		}		
+	}
+
 	return 0;
 }
 
@@ -88,3 +114,26 @@ void GameMap::MoveViewport(int roleX, int roleY)
 	}
 
 };
+
+
+void GameMap::DrawMini(HDC hdcDest, const vector<Sprite *> & vecPplayer)
+{
+	::MoveToEx(hdcDest, GAME_WIDTH - miniMap_Width -1, 0, NULL);
+	::LineTo(hdcDest, GAME_WIDTH - miniMap_Width -1, miniMap_Height+1);
+	::LineTo(hdcDest, GAME_WIDTH -1, miniMap_Height+1);
+
+	BitBlt(hdcDest, 
+			GAME_WIDTH - miniMap_Width, 0, 
+			miniMap_Width, miniMap_Height, 
+			hdcMiniMap, 
+			0, 0, 
+			SRCCOPY);
+
+	vector<Sprite *>::const_iterator itr;
+	for (itr=vecPplayer.begin();itr!=vecPplayer.end();itr++)
+	{
+		int x = GAME_WIDTH - miniMap_Width + (*itr)->GetX()/16;
+		int y = (*itr)->GetY()/16;
+		::Rectangle(hdcDest, x-2, y -2, x+2, y+2);
+	}
+}

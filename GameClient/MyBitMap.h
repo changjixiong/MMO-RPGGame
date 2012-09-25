@@ -13,6 +13,7 @@ public:
 	void Show(HDC hdcDest, int x, int y, bool invert=false);
 	void Draw(HDC hdcDest, int x, int y, bool invert=false);	
 	void SetOffSet(int x, int y);
+	void StretchDraw(HDC hdcDest, int x, int y, int width, int height);
 
 	
 

@@ -213,7 +213,7 @@ int GameWorld::Login()
 	SendMsg(szUser);
 	
 	pGameMap	= new GameMap();
-	pGameMap->Init();
+	pGameMap->Init(hdcScreen);
 	
 	memset(szData, 0 ,MsgLen);
 	datasock.Receive(szData, MsgLen);
@@ -274,6 +274,8 @@ int GameWorld::Main()
 		(*iter)->Draw(hdcCanvas);
 	}	
 
+
+	pGameMap->DrawMini(hdcCanvas, vecPplayer);
 	Refresh();
 	
 	return 0;

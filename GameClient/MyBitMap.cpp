@@ -122,6 +122,15 @@ void MyBitMap::Draw(HDC hdcDest, int x, int y, bool invert)
 	}	
 }
 
+void MyBitMap::StretchDraw(HDC hdcDest, int x, int y, int width, int height)
+{
+	StretchBlt(hdcDest,
+				x, y ,
+				width,height,hdcOriginal,
+				0,0,Width,Height,
+				SRCCOPY);
+}
+
 void MyBitMap::SetOffSet(int x, int y)
 {
 	offset_x	= x;
