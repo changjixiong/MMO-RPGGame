@@ -93,9 +93,8 @@ class Connection:
     def sendBuffer(self):
         if self.closed == False:            
             len=self.sock.send(self.databuffer)
-            if len>0 and self.role is not None:
+            if self.role is not None and len>0:
                 print self.role.id, 'send',self.databuffer[0:len]
-                self.role.x, self.role.y = self.databuffer[0:len-1].split(',')[2:4]
             self.databuffer=self.databuffer[len:]
         
     def receive(self):
@@ -159,13 +158,18 @@ class HandlerLogic:
     def handle(self, connection,data):
         #deal
         msg = data
-        msgList=msg[1:-1].split(',')
+        msgList=msg.split(',')
         for item in connection.role.roleDB.roleDic.values():
             if item[0] is not None:
                 item[0].translator.sendString(item[0], msg)
+               
+        connection.role.x, connection.role.y = msgList[2:4]
+        print connection.role.id,'at',connection.role.x, connection.role.y
+
     
     def enter(self, connection):
         for item in connection.role.roleDB.roleDic.values():
+            #print item[0].role.pos('SPRITEINITPLAYER')
             if item[0] is not None and item[0] is not connection:
                 item[0].translator.sendString(item[0], connection.role.pos('SPRITEINITPLAYER'))
                 connection.translator.sendString(connection, item[0].role.pos('SPRITEINITPLAYER'))

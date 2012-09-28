@@ -67,13 +67,13 @@ int GameWorld::HandleMsg()
 		{
 		case SPRITEINITROLE:
 			spMan		= new Sprite();		
-			spMan->Init(msg.c_str());
+			spMan->Init(msg.c_str(), *pSpriteResource);
 			vecPplayer.push_back(spMan);
 			break;
 		case SPRITEINITPLAYER:
 			{
 				Sprite *spPlayer	= new Sprite();	
-				spPlayer->Init(msg.c_str());
+				spPlayer->Init(msg.c_str(), *pSpriteResource);
 				vecPplayer.push_back(spPlayer);
 			}
 			break;
@@ -214,6 +214,9 @@ int GameWorld::Login()
 	
 	pGameMap	= new GameMap();
 	pGameMap->Init(hdcScreen);
+
+	pSpriteResource = new SpriteResource();
+	pSpriteResource->init();
 	
 	memset(szData, 0 ,MsgLen);
 	datasock.Receive(szData, MsgLen);
@@ -243,6 +246,13 @@ int GameWorld::Shutdown()
 
 	delete pGameMap;
 	pGameMap = NULL;
+
+	if (pSpriteResource)
+	{
+		delete pSpriteResource;
+		pSpriteResource = NULL;
+	}	
+
 	return 0;
 }
 

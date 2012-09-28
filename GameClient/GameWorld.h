@@ -16,6 +16,7 @@
 
 class GameMap;
 class Sprite;
+class SpriteResource;
 
 using namespace std;
 
@@ -68,6 +69,7 @@ private:
 
 	GameMap *pGameMap;
 	Sprite	*spMan;
+	
 
 	HDC		hdcCanvas;
 	HBITMAP	bitCanvas;
@@ -85,6 +87,8 @@ private:
 	vector<Sprite *> vecPplayer;
 	SocketLib::DataSocket datasock;
 	string severMessageBuffer;
+	SpriteResource *pSpriteResource;
+	
 };
 
 

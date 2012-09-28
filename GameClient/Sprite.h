@@ -9,13 +9,27 @@
 enum Action;
 enum DIR;
 
+class SpriteResource
+{
+public:
+	SpriteResource();
+	~SpriteResource();
+	int init();	
+	int *animations[MAX_SPRITE_ANIMATIONS];
+	MyBitMap *pBitMap[MAX_SPRITE_FRAMES];
+private:
+	int Load_Frame(int nFrom, int nCount);
+	int Load_Animation(int anim_index, int num_frames, int *sequence);
+
+};
+
 class Sprite
 {
 public:
 	Sprite();
-	Sprite(const Sprite & sprite);
 	~Sprite();
-	int Init(const char * szData);
+	int GetResource(const SpriteResource & spriteResource);
+	int Init(const char * szData, const SpriteResource & spriteResource);
 	void Animate();
 	void Draw(HDC hdcDest);	
 	void Move(int x, int y);
@@ -28,8 +42,7 @@ public:
 	int GetID(){return id;}
 
 protected:
-	int Load_Frame(int nFrom, int nCount);
-	int Load_Animation(int anim_index, int num_frames, int *sequence);
+
 	void ChangeDir(int x, int y);
 	void ChangeAction(Action act);
 	void MovePos();

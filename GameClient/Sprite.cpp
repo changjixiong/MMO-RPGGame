@@ -23,6 +23,104 @@ int man_walk[8][10] = {{40,41,42,43,44,45,46,47,48,49},
 						{60,61,62,63,64,65,66,67,68,69},
 						{50,51,52,53,54,55,56,57,58,59},};
 
+SpriteResource::SpriteResource()
+{
+	int index=0;
+	// set all images to null
+	for (index = 0; index<MAX_SPRITE_FRAMES; index++)
+		pBitMap[index] = NULL;
+	
+	// set all animations to null
+	for (index = 0; index<MAX_SPRITE_ANIMATIONS; index++)
+		animations[index] = NULL;
+}
+
+SpriteResource::~SpriteResource()
+{
+	int i = 0;
+	
+	for (i=0 ;i<MAX_SPRITE_ANIMATIONS; i++)
+	{
+		if (animations[i] != NULL)
+		{
+			delete [] animations[i];
+		}
+		else
+		{
+			break;
+		}
+	}
+	
+	for (i=0; i<MAX_SPRITE_FRAMES; i++)
+	{
+		if (pBitMap[i] != NULL)
+		{
+			delete pBitMap[i];
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+
+int SpriteResource::init()
+{
+
+	Load_Frame(0, 90);
+	
+	for (int i=0;i<DIRCOUNT;i++)
+	{
+		Load_Animation(STAND+i, 8, man_anims[i]);
+	}
+	
+	for (i=0;i<DIRCOUNT;i++)
+	{
+		Load_Animation(WALK+i, 10, man_walk[i]);
+	}
+	
+	return 0;
+}
+
+int SpriteResource::Load_Frame(int nFrom, int nCount)
+{
+	char sztemp[120]={0};
+	int x=0,y=0;
+	for (int i=nFrom; i<nFrom+nCount; i++)
+	{
+		sprintf(sztemp,"./pic/man/C%05d.bmp",i);	
+		pBitMap[i] = new MyBitMap((const char*)sztemp, true);	
+		sprintf(sztemp,"./pic/man/C%05d.txt",i);
+		FILE *fp;
+		fp = fopen(sztemp,"r");
+		if (fp)
+		{
+			fscanf(fp,"%d,%d", &x, &y);
+			
+			pBitMap[i]->SetOffSet(x,y);
+			
+			fclose(fp);
+			fp=NULL;
+		}		
+	}
+	
+	return 0;
+}
+
+int SpriteResource::Load_Animation(int anim_index, int num_frames, int *sequence)
+{
+	animations[anim_index] = new int[num_frames+1];
+	
+	for (int i=0; i<num_frames; i++)
+	{
+		animations[anim_index][i] = sequence[i];
+	}
+	animations[anim_index][i] = -1;
+	
+	
+	return 0;
+}
+
 Sprite::Sprite()
 {
 	int index=0;
@@ -50,97 +148,34 @@ Sprite::Sprite()
 	id=0;
 }
 
-Sprite::Sprite(const Sprite & sprite)
-{
-
-}
-
 Sprite::~Sprite()
 {
-	int i = 0;
-
-	for (i=0 ;i<MAX_SPRITE_ANIMATIONS; i++)
-	{
-		if (animations[i] != NULL)
-		{
-			delete [] animations[i];
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	for (i=0; i<MAX_SPRITE_FRAMES; i++)
-	{
-		if (pBitMap[i] != NULL)
-		{
-			delete pBitMap[i];
-		}
-		else
-		{
-			break;
-		}
-	}
+	
 }
 
-int Sprite::Init(const char * szData)
+int Sprite::GetResource(const SpriteResource & spriteResource)
+{
+	int i=0;
+	for (i=0;i<MAX_SPRITE_ANIMATIONS;i++)
+	{
+		animations[i] = spriteResource.animations[i];
+	}
+
+	for (i=0;i<MAX_SPRITE_FRAMES;i++)
+	{
+		pBitMap[i] = spriteResource.pBitMap[i];
+	}
+
+	return 0;
+}
+
+
+int Sprite::Init(const char * szData, const SpriteResource & spriteResource)
 {	
-
 	int action;
-	sscanf(szData,"[%d, %d,%d,%d]", &id, &action, &pos_x, &pos_y);	
+	sscanf(szData,"[%d, %d,%d,%d]", &id, &action, &pos_x, &pos_y);		
 
-	Load_Frame(0, 90);
-
-	for (int i=0;i<DIRCOUNT;i++)
-	{
-		Load_Animation(STAND+i, 8, man_anims[i]);
-	}
-	
-	for (i=0;i<DIRCOUNT;i++)
-	{
-		Load_Animation(WALK+i, 10, man_walk[i]);
-	}
-
-	return 0;
-}
-
-int Sprite::Load_Animation(int anim_index, int num_frames, int *sequence)
-{
-	animations[anim_index] = new int[num_frames+1];
-
-	for (int i=0; i<num_frames; i++)
-	{
-		animations[anim_index][i] = sequence[i];
-	}
-	animations[anim_index][i] = -1;
-
-	
-	return 0;
-}
-
-int Sprite::Load_Frame(int nFrom, int nCount)
-{
-	char sztemp[120]={0};
-	int x=0,y=0;
-	for (int i=nFrom; i<nFrom+nCount; i++)
-	{
-		sprintf(sztemp,"./pic/man/C%05d.bmp",i);	
-		pBitMap[i] = new MyBitMap((const char*)sztemp, true);	
-		sprintf(sztemp,"./pic/man/C%05d.txt",i);
-		FILE *fp;
-		fp = fopen(sztemp,"r");
-		if (fp)
-		{
-			fscanf(fp,"%d,%d", &x, &y);
-				
-			pBitMap[i]->SetOffSet(x,y);
-
-			fclose(fp);
-			fp=NULL;
-		}		
-	}
-
+	GetResource(spriteResource);
 	return 0;
 }
 
