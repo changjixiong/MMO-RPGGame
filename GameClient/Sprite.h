@@ -9,6 +9,7 @@
 enum Action;
 enum DIR;
 
+
 class SpriteResource
 {
 public:
@@ -33,18 +34,23 @@ public:
 	void Animate();
 	void Draw(HDC hdcDest);	
 	void Move(int x, int y);
+	void Attack(int x, int y);
+	void Die(int x, int y);
 	int	GetX(){return pos_x;}
 	int GetY(){return pos_y;}
 	Action GetAction() const;
 	DIR	GetDir() const;
 	int GetFrameNum() const {return BitMapFrame;}
+	int GetAnimIndex() const {return animIndex;}
 	int AnimationBegin() const {return BitMapFrame==0;}
 	int GetID(){return id;}
+	bool NeedRevive();
+	void ChangePos(int x, int y){pos_x = x; pos_y = y;}
+	void ChangeAction(Action act);
 
 protected:
 
-	void ChangeDir(int x, int y);
-	void ChangeAction(Action act);
+	void ChangeDir(int x, int y);	
 	void MovePos();
 private:
 

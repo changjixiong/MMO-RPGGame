@@ -11,7 +11,9 @@ const int walkFrames			= 10;
 const int DebugMsgNum			= 10;
 
 const int DebugMsg_Index_viewPort	= 0;
-const int DebugMsg_Index_SerMsg		= 1;
+const int DebugMsg_Index_GetMsg		= 1;
+const int DebugMsg_Index_SendMsg	= 2;
+const int DebugMsg_Index_Animat		= 3;
 
 const int MsgLen				= 64;
 const int DebugMsgLen			= 64;
@@ -58,9 +60,9 @@ int GameWorld::HandleMsg()
 
 	while (msg.length()>0)
 	{
-		int action, id, x, y;
-		sscanf(msg.c_str(),"[%d,%d,%d,%d]",  &id, &action,&x, &y);
-		vecDebugMessage[DebugMsg_Index_SerMsg]=msg;
+		int action, id, idTarget, x, y;
+		sscanf(msg.c_str(),"[%d,%d,%d,%d,%d]",  &id, &action, &idTarget, &x, &y);
+		vecDebugMessage[DebugMsg_Index_GetMsg] = "get:" +msg;
 		vector<Sprite *>::iterator iter;
 		
 		switch (action)
@@ -79,7 +81,6 @@ int GameWorld::HandleMsg()
 			break;
 
 		case SPRITEDESTORYPLAYER:
-			i=vecPplayer.size();
 			for (iter=vecPplayer.begin(); iter!=vecPplayer.end();iter++)
 			{
 				if ((*iter)->GetID() == id)
@@ -90,6 +91,16 @@ int GameWorld::HandleMsg()
 					delete spPlayer;
 				}
 			}
+		case SPRITEREVIVE:
+			for (iter=vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+			{
+				if ((*iter)->GetID() == id)
+				{
+					(*iter)->ChangeAction(STAND);
+					(*iter)->ChangePos(x, y);
+				}
+			}
+			break;
 			
 		case WALK:			
 			for (iter=vecPplayer.begin(); iter!=vecPplayer.end();iter++)
@@ -99,6 +110,25 @@ int GameWorld::HandleMsg()
 					(*iter)->Move(x,y);
 				}
 			}			
+			break;
+		case ATTACK:
+			for (iter=vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+			{
+				if ((*iter)->GetID() == id)
+				{
+					(*iter)->Attack(x,y);
+				}
+			}	
+			break;
+
+		case DIE:
+			for (iter=vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+			{
+				if ((*iter)->GetID() == id)
+				{
+					(*iter)->Die(x,y);
+				}
+			}	
 			break;
 			
 		default:
@@ -114,13 +144,14 @@ int GameWorld::HandleMsg()
 
 int GameWorld::SendMsg(const string & strMsg)
 {
-	if (strMsg.length()==0)
+	if (strMsg.length()==0 || datasock.IsConnected() == false)
 	{
 		return 0;
 	}
 
 	string msg = "["+strMsg+"]";
 
+	vecDebugMessage[DebugMsg_Index_SendMsg] = "send:" +msg;
 	try
 	{
 		datasock.Send(msg.c_str(), msg.length());
@@ -128,11 +159,13 @@ int GameWorld::SendMsg(const string & strMsg)
 	catch (SocketLib::Exception &e)
 	{
 		MessageBox(hwnd_window, e.PrintError().c_str(),"", MB_OK);
+		datasock.Close();
 		return -1;
 		
 	}
 	catch (...)
 	{
+		datasock.Close();
 		MessageBox(hwnd_window, "unknow error","", MB_OK);
 		return -1;
 	}	
@@ -282,12 +315,19 @@ int GameWorld::Main()
 	for (iter = vecPplayer.begin(); iter!=vecPplayer.end();iter++)
 	{
 		(*iter)->Draw(hdcCanvas);
+
+		if ((*iter)->GetID() == spMan->GetID())
+		{
+			sprintf(szDebugMessage, "AnimIndex:%d, FrameNum :%d",spMan->GetAnimIndex(),spMan->GetFrameNum());
+			vecDebugMessage[DebugMsg_Index_Animat]=szDebugMessage;
+		}
+		
 	}	
 
 
 	pGameMap->DrawMini(hdcCanvas, vecPplayer);
 	Refresh();
-	
+	GenerateMsg();
 	return 0;
 }
 
@@ -304,6 +344,18 @@ void GameWorld::FixToGrid(Sprite * spMan, int & x, int & y)
 
 	x = spMan->GetX() + (abs(x - spMan->GetX()) > stepLen_x/2 ? 1 :0) * ( x > spMan->GetX() ? 1 : -1) * stepLen_x;
 	y = spMan->GetY() + (abs(y - spMan->GetY()) > stepLen_y/2 ? 1 :0) * ( y > spMan->GetY() ? 1 : -1) * stepLen_y;
+}
+
+int GameWorld::GenerateMsg()
+{
+	if (spMan->NeedRevive())
+	{
+		char szMessage[MsgLen]={0};
+		sprintf(szMessage, "%d,%d,%d,%d,%d", spMan->GetID(), SPRITEREVIVE, 0, 320, 240);
+		SendMsg(szMessage);	
+	}
+
+	return 0;
 }
 
 void GameWorld::SetMessageFromInput(UINT msg, int x, int y)
@@ -323,17 +375,40 @@ void GameWorld::SetMessageFromInput(UINT msg, int x, int y)
 			if (spMan->AnimationBegin() || spMan->GetAction() == STAND)
 			{
 				FixToGrid(spMan, x, y);
-				sprintf(szMessage, "%d,%d,%d,%d", spMan->GetID(), WALK, x, y);
-			}
-			
+
+				int idTarget = haveSprite(x, y);
+
+				if (idTarget>0)
+				{
+					sprintf(szMessage, "%d,%d,%d,%d,%d", spMan->GetID(), ATTACK, idTarget, x, y);
+				}
+				else
+				{
+					sprintf(szMessage, "%d,%d,%d,%d,%d", spMan->GetID(), WALK, 0, x, y);
+				}
+			}			
 
 			break;
 		default:
 			break;
-	}
+	}	
 	SendMsg(szMessage);	
 }
 
+int GameWorld::haveSprite(int x, int y)
+{
+	// it will be replaced of find_if late
+	vector<Sprite *>::iterator iter;
+	for (iter = vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+	{
+		if ((*iter)->GetID()!= spMan->GetID() && (*iter)->GetX() == x && (*iter)->GetY()==y)
+		{
+			return (*iter)->GetID();
+		}
+	}
+	
+	return 0;
+}
 
 int GameWorld::DebugOut()
 {

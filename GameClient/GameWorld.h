@@ -45,10 +45,14 @@ enum Action
 {
 	STAND=0,	
 	WALK=8,
+	ATTACK=16,
+	DIE = 24,
 
 	SPRITEINITROLE =1,
 	SPRITEINITPLAYER =2,
 	SPRITEDESTORYPLAYER=3,
+	SPRITEREVIVE=4,
+
 };
 
 class GameWorld
@@ -78,10 +82,12 @@ private:
 private:
 	int Refresh();
 	void FixToGrid(Sprite * spMan, int & x, int & y);
+	int haveSprite(int x, int y);
 	int HandleMsg();	
 	int DebugOut();
 	int SendMsg(const string & strMsg);
 	int Login();
+	int GenerateMsg();
 
 	vector<string> vecDebugMessage;
 	vector<Sprite *> vecPplayer;
