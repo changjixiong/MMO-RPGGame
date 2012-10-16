@@ -9,6 +9,7 @@
 #include "MyBitMap.h"
 #include "Sprite.h"
 #include "GameMap.h"
+#include "MessageOut.h"
 #include "Socket/SocketLibSocket.h"
 
 #define GAME_WIDTH 640
@@ -17,6 +18,7 @@
 class GameMap;
 class Sprite;
 class SpriteResource;
+class MessageOut;
 
 using namespace std;
 
@@ -55,6 +57,17 @@ enum Action
 
 };
 
+enum MiniPosColor
+{
+	MiniPosColor_Role = RGB(0xff,0xff,0xff),
+	MiniPosColor_Player = RGB(0,0,255),
+};
+
+enum RoleInfoColor
+{
+	RoleNormal = RGB(0xff, 0xff,0xff)
+};
+
 class GameWorld
 {
 public:
@@ -74,7 +87,6 @@ private:
 	GameMap *pGameMap;
 	Sprite	*spMan;
 	
-
 	HDC		hdcCanvas;
 	HBITMAP	bitCanvas;
 	HBITMAP	bitOldCanvas;
@@ -94,6 +106,8 @@ private:
 	SocketLib::DataSocket datasock;
 	string severMessageBuffer;
 	SpriteResource *pSpriteResource;
+
+	MessageOut *pMessageOut;
 	
 };
 

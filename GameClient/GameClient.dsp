@@ -102,6 +102,10 @@ SOURCE=.\GameWorld.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\MessageOut.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\MyBitMap.cpp
 # End Source File
 # Begin Source File
@@ -119,6 +123,10 @@ SOURCE=.\GameMap.h
 # Begin Source File
 
 SOURCE=.\GameWorld.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\MessageOut.h
 # End Source File
 # Begin Source File
 

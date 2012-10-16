@@ -4,6 +4,9 @@
 const int DIRCOUNT = 8;
 const int MaxFrameOfDie = 9;
 
+const int spriteInfoWidth = 120;
+const int spriteInfoHeight = 100;
+
 //there arrays will be inited by the content from config file later.
 int man_stand[8][8] = { {0,1,2,3,4,3,2,1,},
 						{5,6,7,8,9,8,7,6,},
@@ -82,12 +85,11 @@ SpriteResource::~SpriteResource()
 			break;
 		}
 	}
+
 }
 
 int SpriteResource::init()
 {
-
-	//Load_Frame(0, 90);
 
 	Load_Frame(0, 25);	
 	for (int i=0;i<DIRCOUNT;i++)
@@ -211,8 +213,21 @@ int Sprite::Init(const char * szData, const SpriteResource & spriteResource)
 	sscanf(szData,"[%d, %d, %d, %d, %d]", &id, &action, &idTarget, &pos_x, &pos_y);		
 
 	GetResource(spriteResource);
+
+	MiniPos_color = MiniPosColor_Role;
+
+	pMessageOut = new MessageOut(spriteInfoWidth, spriteInfoHeight, 13, FW_THIN);
+
+	roleInfoColor = RoleNormal;
+	pMessageOut->SetTextColor(roleInfoColor);
 	return 0;
 }
+
+void Sprite::SetMiniPosColor(MiniPosColor color)
+{
+	MiniPos_color = color;
+}
+
 
 void Sprite::Animate()
 {
@@ -253,7 +268,7 @@ void Sprite::Animate()
 
 void Sprite::Draw(HDC hdcDest)
 {
-	//int i = animations[animIndex][BitMapFrame];
+
 	if (pBitMap[animations[animIndex][BitMapFrame]])
 	{
 		if (Dir == NORTHEAST || Dir == EAST || Dir == SOUTHEAST)
@@ -265,11 +280,22 @@ void Sprite::Draw(HDC hdcDest)
 			pBitMap[animations[animIndex][BitMapFrame]]->Draw(hdcDest, pos_x - ViewportPos_x, pos_y - ViewportPos_y);
 		}
 
-		char szRoleInof[32]={0};
-		sprintf(szRoleInof,"ID:%d [%d,%d]", id, pos_x, pos_y);
-		TextOut(hdcDest, pos_x - 40 - ViewportPos_x,pos_y - 52 - ViewportPos_y,szRoleInof,strlen(szRoleInof));
 		
+		DrawInfo(hdcDest);
 	}		
+}
+
+void Sprite::DrawInfo(HDC hdcDest)
+{
+	
+	char szRoleInof[32]={0};
+	sprintf(szRoleInof,"ID:%d [%d,%d]", id, pos_x, pos_y);	
+
+
+	pMessageOut->Draw(hdcDest,
+					szRoleInof,
+					pos_x - 40 - ViewportPos_x,pos_y - 52 - ViewportPos_y);
+
 }
 
 void Sprite::ChangeDir(int x, int y)
@@ -383,11 +409,7 @@ void Sprite::Attack(int x, int y)
 
 void Sprite::Die(int x, int y)
 {
-	//if (x != pos_x || y != pos_y)
-	//{
-		ChangeAction(DIE);
-		//ChangeDir(x, y);		
-	//}	
+	ChangeAction(DIE);
 }
 
 void Sprite::ChangeAction(Action act)

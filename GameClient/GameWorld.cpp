@@ -18,11 +18,13 @@ const int DebugMsg_Index_Animat		= 3;
 const int MsgLen				= 64;
 const int DebugMsgLen			= 64;
 
-const int DebugOut_X			= 10;
-const int DebugOut_Y			= 10;
-const int DebugOut_H			= 18;
+const int DebugOut_Width		= 200;
+const int DebugOut_Height		= 300;
 
 const int TimeInterval			= 16;
+
+const int DebugOut_X			= 10;
+const int DebugOut_Y			= 10;
 
 
 int SceneWidth = GAME_WIDTH*3;
@@ -56,8 +58,6 @@ int GameWorld::HandleMsg()
 	string msg = severMessageBuffer.substr(0, severMessageBuffer.find("]")+1);
 	severMessageBuffer=severMessageBuffer.substr(msg.length());
 
-	int i;
-
 	while (msg.length()>0)
 	{
 		int action, id, idTarget, x, y;
@@ -70,12 +70,14 @@ int GameWorld::HandleMsg()
 		case SPRITEINITROLE:
 			spMan		= new Sprite();		
 			spMan->Init(msg.c_str(), *pSpriteResource);
+			spMan->SetMiniPosColor(MiniPosColor_Role);
 			vecPplayer.push_back(spMan);
 			break;
 		case SPRITEINITPLAYER:
 			{
 				Sprite *spPlayer	= new Sprite();	
 				spPlayer->Init(msg.c_str(), *pSpriteResource);
+				spPlayer->SetMiniPosColor(MiniPosColor_Player);
 				vecPplayer.push_back(spPlayer);
 			}
 			break;
@@ -221,6 +223,8 @@ int GameWorld::Init(HWND hwnd)
 	
 	::SetTimer(hwnd_window, 1, TimeInterval, NULL);
 	SetBkMode(hdcCanvas,TRANSPARENT);
+
+	pMessageOut = new MessageOut(DebugOut_Width, DebugOut_Height, 12, FW_THIN);
 	
 	return 0;
 }
@@ -280,11 +284,16 @@ int GameWorld::Shutdown()
 	delete pGameMap;
 	pGameMap = NULL;
 
+	delete pMessageOut;
+	pMessageOut = NULL;
+
 	if (pSpriteResource)
 	{
 		delete pSpriteResource;
 		pSpriteResource = NULL;
 	}	
+
+
 
 	return 0;
 }
@@ -412,10 +421,7 @@ int GameWorld::haveSprite(int x, int y)
 
 int GameWorld::DebugOut()
 {
-	for (int i=0;i<vecDebugMessage.size();i++)
-	{
-		TextOut(hdcCanvas, DebugOut_X,DebugOut_Y+i*DebugOut_H,vecDebugMessage[i].c_str(),vecDebugMessage[i].length());
-	}
+	pMessageOut->Draw(hdcCanvas, vecDebugMessage, DebugOut_X ,DebugOut_Y);
 
 	return 0;
 }

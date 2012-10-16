@@ -146,31 +146,11 @@ int WINAPI WinMain(	HINSTANCE hinstance,
 		return 0;
 	}
 
-
-	// enter main event loop, but this time we use PeekMessage()
-	// instead of GetMessage() to retrieve messages
-	while(TRUE)
-		{
-		// test if there is a message in queue, if so get it
-		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
-		   { 
-		   // test if this is a quit
-		   if (msg.message == WM_QUIT)
-			   break;
-		
-		   // translate any accelerator keys
-		   TranslateMessage(&msg);
-
-		   // send the message to the window proc
-		   DispatchMessage(&msg);
-		   } // end if
-    
-		// main game processing goes here
-		// Game_Main(); // or whatever your loop is called		
-		// move to WM_TIMER zone
-		
-		//
-		} // end while
+	while (GetMessage(&msg, NULL, 0, 0)) 
+	{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+	}
 
 	gameWorld.Shutdown();	
 

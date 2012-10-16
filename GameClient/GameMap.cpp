@@ -118,9 +118,9 @@ void GameMap::MoveViewport(int roleX, int roleY)
 
 void GameMap::DrawMini(HDC hdcDest, const vector<Sprite *> & vecPplayer)
 {
-	::MoveToEx(hdcDest, GAME_WIDTH - miniMap_Width -1, 0, NULL);
-	::LineTo(hdcDest, GAME_WIDTH - miniMap_Width -1, miniMap_Height+1);
-	::LineTo(hdcDest, GAME_WIDTH -1, miniMap_Height+1);
+ 	::MoveToEx(hdcDest, GAME_WIDTH - miniMap_Width -1, 0, NULL);
+ 	::LineTo(hdcDest, GAME_WIDTH - miniMap_Width -1, miniMap_Height+1);
+ 	::LineTo(hdcDest, GAME_WIDTH -1, miniMap_Height+1);
 
 	BitBlt(hdcDest, 
 			GAME_WIDTH - miniMap_Width, 0, 
@@ -132,8 +132,19 @@ void GameMap::DrawMini(HDC hdcDest, const vector<Sprite *> & vecPplayer)
 	vector<Sprite *>::const_iterator itr;
 	for (itr=vecPplayer.begin();itr!=vecPplayer.end();itr++)
 	{
+		
 		int x = GAME_WIDTH - miniMap_Width + (*itr)->GetX()/16;
 		int y = (*itr)->GetY()/16;
-		::Rectangle(hdcDest, x-2, y -2, x+2, y+2);
-	}
+		SetPixel(hdcDest,x-1,y-1, (*itr)->GetMiniPosColor());
+		SetPixel(hdcDest,x-1,y, (*itr)->GetMiniPosColor());
+		SetPixel(hdcDest,x-1,y+1, (*itr)->GetMiniPosColor());
+
+		SetPixel(hdcDest,x,y-1, (*itr)->GetMiniPosColor());
+		SetPixel(hdcDest,x,y, (*itr)->GetMiniPosColor());
+		SetPixel(hdcDest,x,y+1, (*itr)->GetMiniPosColor());
+
+		SetPixel(hdcDest,x+1,y-1, (*itr)->GetMiniPosColor());
+		SetPixel(hdcDest,x+1,y, (*itr)->GetMiniPosColor());
+		SetPixel(hdcDest,x+1,y+1, (*itr)->GetMiniPosColor());		
+	}	
 }
