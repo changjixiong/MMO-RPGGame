@@ -1,8 +1,9 @@
 import socket,select
 import time
+import random
 
-actionDic={'SPRITEINITROLE':'1',
-            'SPRITEINITPLAYER':'2',
+actionDic={ 'INITMAINROLE':'1',
+            'INITSPRITE':'2',
            'SPRITEDESTORYPLAYER':'3',
            'SPRITEREVIVE':'4',
             'STAND':'0',	
@@ -10,29 +11,72 @@ actionDic={'SPRITEINITROLE':'1',
             'ATTACK':'16',
            'DIE':'24',}
 
-class RoleDB:
+OBJ_TYPE = {
+            'player':'1',
+            'wolf':'2',
+            }
+
+OBJ_STATU = {
+            'dormant':'0',
+            'normal':'1',
+            }
+
+LastanimalGenTimeInterval = 0
+    
+class SpriteDB:
     
     def __init__(self):
-        self.roleDic={}
+        self.spriteDic={}
         self.maxID = 0
 
     def genID(self):
         self.maxID+=1
         return self.maxID
 
-    def removeRole(self,ID):
-        global g_roleDB
-        if ID in g_roleDB.roleDic:
-            del g_roleDB.roleDic[ID]
+    def getSprite(self, ID):
+        if ID in self.spriteDic:
+            return self.spriteDic[ID]
+        else:
+            return None
+    
+    def addSprite(self, sprite):
+        self.spriteDic[sprite.ID] = sprite
+        
+    def removeSprite(self,ID):
+        if ID in g_roleDB.spriteDic:
+            del g_roleDB.spriteDic[ID]
 
     def findUserByName(self, name):
-        for v in self.roleDic.values():
+        for v in self.spriteDic.values():
             if name == v.name:
                 return v
-        return None
+        return None 
     
-g_roleDB = RoleDB()
+g_roleDB = SpriteDB()
+g_animalDB = SpriteDB()
+g_deadRoleList = []
+g_deadAnimalList = []
 
+
+def GameLoop(*connList):    
+    currentTime = time.time()    
+    global LastanimalGenTimeInterval
+    '''
+        typeid, id, statu, action, targetTypeID, targetid, x, y
+    '''
+    global g_deadRoleList
+    for role in g_deadRoleList:
+        if currentTime - role.dieTime>=1:
+            role.revive()
+            g_deadRoleList.remove(role)
+
+    if currentTime - LastanimalGenTimeInterval>=5:
+        for animal in g_deadAnimalList:
+            if currentTime - animal.dieTime>=2:
+                animal.revive()
+                g_deadAnimalList.remove(animal)
+        LastanimalGenTimeInterval = currentTime
+            
 class ListeningManager:
     def __init__(self,connectionManager):
         self.cm=connectionManager
@@ -66,8 +110,10 @@ class ConnectionManager:
         
     def manage(self):        
         self.listen()
+        GameLoop(*self.connectionList)
         self.send()
         self.closeConnections()
+        
 
     def close(self, connection):
         self.clientsockList.remove(connection.sock)
@@ -162,6 +208,7 @@ class Connection:
 class HandlerLogon:
     def handle(self, connection, data):
         global g_roleDB
+        global g_animalDB
         try:            
             username, password = data.split(',')
             if g_roleDB.findUserByName(username) is not None:
@@ -169,16 +216,21 @@ class HandlerLogon:
                 connection.translator.sendString(connection, 'user is online')
             else:
                 role = Role(connection, username)
-                connection.roleID = role.roleID
-                g_roleDB.roleDic[role.roleID] = role
-                connection.translator.sendString(connection, role.pos('SPRITEINITROLE'))
+                connection.roleID = role.ID
+                g_roleDB.addSprite(role)
+                connection.translator.sendString(connection, role.posMsg('INITMAINROLE'))
                 connection.removeHandler()
 
-                self.sendOthers(connection, role.pos('SPRITEINITPLAYER'))
+                self.sendOthers(connection, role.posMsg('INITSPRITE'))
 
-                for role in g_roleDB.roleDic.values():
-                    if role.roleID != connection.roleID:
-                        connection.translator.sendString(connection, role.pos('SPRITEINITPLAYER'))
+                for role in g_roleDB.spriteDic.values():
+                    if role.ID != connection.roleID:
+                        connection.translator.sendString(connection, role.posMsg('INITSPRITE'))
+
+                for sprite in g_animalDB.spriteDic.values():
+                    print 'send g_animalDB'
+                    connection.translator.sendString(connection, sprite.posMsg('INITSPRITE'))
+                    
                 connection.addHandler(HandlerLogic())
         except Exception,x:
             print x
@@ -194,27 +246,47 @@ class HandlerLogon:
 
     def sendOthers(self, conn, data):
         global g_roleDB
-        for role in g_roleDB.roleDic.values():
-            if role.roleID != conn.roleID:
+        for role in g_roleDB.spriteDic.values():
+            if role.ID != conn.roleID:
                 role.conn.translator.sendString(role.conn, data)
     
 class HandlerLogic:
+    '''
+        typeid, id, statu, action, targetTypeID, targetid, x, y
+
+    '''
     def handle(self, connection,data):
         global g_roleDB
+        global g_animalDB
         msgList=data.split(',')
 
         print 'HandlerLogic',msgList
-        for v in g_roleDB.roleDic.values():
+        for v in g_roleDB.spriteDic.values():
             v.conn.translator.sendString(v.conn, data)
 
-        if msgList[1] == actionDic['ATTACK']:
-            g_roleDB.roleDic[int(msgList[2])].HP-=1
-            if g_roleDB.roleDic[int(msgList[2])].HP<=0:
-                g_roleDB.roleDic[int(msgList[2])].conn.addHandler(HandlerDie())           
+        role = None
+        global OBJ_TYPE
+        if msgList[3] == actionDic['ATTACK']:
+            if msgList[4] == OBJ_TYPE['player']:
+                role = g_roleDB.getSprite(int(msgList[5]))
+                role.HP-=1
+                if role.HP<=0:
+                    role.conn.addHandler(HandlerDie())
+                print connection.roleID,'at',role.x, role.y
+            elif msgList[4] == OBJ_TYPE['wolf']:                
+                animal = g_animalDB.getSprite(int(msgList[5]))
+                animal.HP-=1
+                if animal.HP<=0:
+                    #for v in g_roleDB.spriteDic.values():                        
+                        #v.conn.translator.sendString(v.conn, animal.dieMsg())
+                    animal.die()
+                    
+                     
         else:
-            g_roleDB.roleDic[connection.roleID].x, g_roleDB.roleDic[connection.roleID].y = msgList[3:5]
-            
-        print connection.roleID,'at',g_roleDB.roleDic[connection.roleID].x, g_roleDB.roleDic[connection.roleID].y
+            role = g_roleDB.getSprite(connection.roleID)
+            role.x, role.y = msgList[6:8]
+            print connection.roleID,'at',role.x, role.y
+        
 
     def enter(self, connection):
         print 'HandlerLogic enter'
@@ -222,47 +294,60 @@ class HandlerLogic:
         
     def hungup(self,connection):
         global g_roleDB
+        global g_deadRoleList
 
-        self.sendOthers(connection, str(connection.roleID)+','+actionDic['SPRITEDESTORYPLAYER']+',0,0,0')
-        g_roleDB.removeRole(connection.roleID)
+        role = g_roleDB.getSprite(connection.roleID)
+        if role in g_deadRoleList:
+            g_deadRoleList.remove(g_roleDB.getSprite(connection.roleID))
+        
+        self.sendOthers(connection, g_roleDB.getSprite(connection.roleID).hungupMsg())
+        g_roleDB.removeSprite(connection.roleID)
+        
         
     def sendOthers(self, conn, data):
         global g_roleDB
-        for role in g_roleDB.roleDic.values():
-            if role.roleID != conn.roleID:
+        for role in g_roleDB.spriteDic.values():
+            if role.ID != conn.roleID:
                 role.conn.translator.sendString(role.conn, data)
                 
     def leave(self,connection):
         print 'HandlerLogic leave'
         pass
 class HandlerDie:
-    def handle(self, connection,data):
+    '''
+        typeid, id, statu, action, targetTypeID, targetid, x, y
+    '''
+    def handle(self, connection, data):
+        '''
         global g_roleDB
         global actionDic
         msgList=data.split(',')
 
-        if msgList[1] == actionDic['SPRITEREVIVE']:        
-            for v in g_roleDB.roleDic.values():
+        if msgList[3] == actionDic['SPRITEREVIVE']:        
+            for v in g_roleDB.spriteDic.values():
                 v.conn.translator.sendString(v.conn, data)
-
-            g_roleDB.roleDic[connection.roleID].HP=3
-            g_roleDB.roleDic[connection.roleID].x=msgList[3]
-            g_roleDB.roleDic[connection.roleID].y=msgList[4]
+            role = g_roleDB.getSprite(connection.roleID)
+            role.HP=3
+            role.x=msgList[6]
+            role.y=msgList[7]
             
             connection.removeHandler()
         
         pass
+        '''
     def enter(self, connection):
         global g_roleDB
         print 'HandlerDie enter'
-        for v in g_roleDB.roleDic.values():
-                    v.conn.translator.sendString(v.conn, g_roleDB.roleDic[connection.roleID].die())
+        for v in g_roleDB.spriteDic.values():
+                    v.conn.translator.sendString(v.conn, g_roleDB.getSprite(connection.roleID).dieMsg())
+        g_roleDB.getSprite(connection.roleID).dieTime = time.time()
+        g_deadRoleList.append(g_roleDB.getSprite(connection.roleID))
 
     def hungup(self,connection):
         global g_roleDB
 
-        self.sendOthers(connection, str(connection.roleID)+','+actionDic['SPRITEDESTORYPLAYER']+',0,0,0')
-        g_roleDB.removeRole(connection.roleID)
+        self.sendOthers(connection, g_roleDB.getSprite(connection.roleID).hungupMsg())
+        g_roleDB.removeSprite(connection.roleID)
           
     def leave(self,connection):
         print 'HandlerDie leave'
@@ -270,8 +355,8 @@ class HandlerDie:
 
     def sendOthers(self, conn, data):
         global g_roleDB
-        for role in g_roleDB.roleDic.values():
-            if role.roleID != conn.roleID:
+        for role in g_roleDB.spriteDic.values():
+            if role.ID != conn.roleID:
                 role.conn.translator.sendString(role.conn, data)
     
 class Translator:
@@ -299,30 +384,121 @@ class Translator:
             
 
 class Role:
+    '''
+        typeid, id, statu, action, targetTypeID, targetid, x, y
+    '''
+    TypeID = OBJ_TYPE['player']
     def __init__(self, connection, name):
         global g_roleDB
-        self.roleID  = g_roleDB.genID()
+        global OBJ_STATU
+        self.ID  = g_roleDB.genID()
         self.name=name
         self.HP=3
         self.x = 320
         self.y = 240
         self.conn = connection
+        self.statu = OBJ_STATU['normal']
+        self.dieTime = 0
  
-    def pos(self, typeName):
+    def posMsg(self, typeName):
         global actionDic
-        return str(self.roleID)+','+actionDic[typeName]+',0,'+str(self.x)+','+str(self.y)
+        return Role.TypeID+','+str(self.ID)+','+self.statu+','+actionDic[typeName]+',0,0,'+str(self.x)+','+str(self.y)
 
-    def die(self):
+    def dieMsg(self):
         global actionDic
-        return str(self.roleID)+','+actionDic['DIE']+',0,'+str(self.x)+','+str(self.y)
+        return Role.TypeID+','+str(self.ID)+','+self.statu+','+actionDic['DIE']+',0,0,'+str(self.x)+','+str(self.y)
+
+    def reviveMsg(self):
+        global actionDic
+        return self.TypeID+','+str(self.ID)+','+self.statu+','+actionDic['SPRITEREVIVE']+',0,0,'+str(self.x)+','+str(self.y)
     
+    def hungupMsg(self):
+        global actionDic
+        return Role.TypeID+','+str(self.ID)+','+self.statu+','+actionDic['SPRITEDESTORYPLAYER']+',0,0,0,0'
+
+    def revive(self):
+        global g_roleDB
+        self.HP=3
+        self.x = 320
+        self.y = 240
+        
+        for v in g_roleDB.spriteDic.values():
+            v.conn.translator.sendString(v.conn, self.reviveMsg())
+        
+        self.conn.removeHandler()
+        
+    def printInfo(self):
+        print self.ID
+        print self.name
+        print self.HP
+        print self.x
+        print self.y
+        print self.conn
     def rebirth(self):
         pass
+
+class Animal:
+    '''
+        typeid, id, statu, action, targetTypeID, targetid, x, y
+    '''
+    def __init__(self, TypeID):        
+        global g_animalDB
+        self.TypeID = TypeID
+        self.HP = 5
+        self.x = 0
+        self.y = 0
+        self.ID = g_animalDB.genID()
+        self.statu = OBJ_STATU['normal']
+        self.dieTime = 0
+
+    def posMsg(self, typeName):
+        global actionDic
+        return self.TypeID+','+str(self.ID)+','+self.statu+','+actionDic[typeName]+',0,0,'+str(self.x)+','+str(self.y)
+
+    def reviveMsg(self):
+        global actionDic
+        return self.TypeID+','+str(self.ID)+','+self.statu+','+actionDic['SPRITEREVIVE']+',0,0,'+str(self.x)+','+str(self.y)
+
+    def dieMsg(self):
+        global actionDic
+        return self.TypeID+','+str(self.ID)+','+self.statu+','+actionDic['DIE']+',0,0,'+str(self.x)+','+str(self.y)
+
+    def die(self):
+        global g_roleDB
+        for v in g_roleDB.spriteDic.values():                        
+            v.conn.translator.sendString(v.conn, self.dieMsg())
+        self.dieTime = time.time()
+        g_deadAnimalList.append(self)
+
+    def revive(self):
+        global g_roleDB
+        self.HP =5
+        self.x = random.randint(0,640/32)*32
+        self.y = random.randint(0,480/24)*24 
         
+        for v in g_roleDB.spriteDic.values():
+            v.conn.translator.sendString(v.conn, self.reviveMsg())
+
+    def printInfo(self):
+        print self.TypeID, self.ID, self.statu
+        
+
+def LoadGame():
+    global g_animalDB
+    global OBJ_TYPE
+    for x in xrange(6):
+        animal = Animal(OBJ_TYPE['wolf'])
+        animal.inUse = True
+        animal.x = random.randint(0,640/32)*32
+        animal.y = random.randint(0,480/24)*24 
+        g_animalDB.addSprite(animal)
+
+         
 def main():
 
     connectM = ConnectionManager()
     listenM = ListeningManager(connectM)
+    LoadGame()     
 
     listenM.addPort(5099)
     while(1):

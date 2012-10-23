@@ -45,11 +45,11 @@ GameWorld::~GameWorld()
 
 int GameWorld::HandleMsg()
 {
-	char szMsg[MsgLen]={0};
+	char szMsg[MsgLen]={0};	
 	try
 	{
-		datasock.Receive(szMsg, MsgLen);
-		severMessageBuffer+=szMsg;
+		int len = datasock.Receive(szMsg, MsgLen - 1);
+		severMessageBuffer.append(szMsg, len);
 	}
 	catch (...)
 	{
@@ -60,63 +60,64 @@ int GameWorld::HandleMsg()
 
 	while (msg.length()>0)
 	{
-		int action, id, idTarget, x, y;
-		sscanf(msg.c_str(),"[%d,%d,%d,%d,%d]",  &id, &action, &idTarget, &x, &y);
+		//typeid, id, statu, action, targetTypeID, targetid, x, y
+		int typeID,id, statu, action, targetTypeID, TargetID, x, y;
+		sscanf(msg.c_str(),"[%d,%d,%d,%d,%d,%d,%d,%d]", &typeID, &id, &statu, &action, &targetTypeID, &TargetID, &x, &y);
 		vecDebugMessage[DebugMsg_Index_GetMsg] = "get:" +msg;
 		vector<Sprite *>::iterator iter;
 		
 		switch (action)
 		{
-		case SPRITEINITROLE:
-			spMan		= new Sprite();		
-			spMan->Init(msg.c_str(), *pSpriteResource);
-			spMan->SetMiniPosColor(MiniPosColor_Role);
-			vecPplayer.push_back(spMan);
+		case INITMAINROLE:
+			spMainRole	= CreateSprite(typeID);
+			spMainRole->Init(msg.c_str());
+			spMainRole->SetMiniPosColor(MiniPosColor_Role);
+			vecpSprite.push_back(spMainRole);			
 			break;
-		case SPRITEINITPLAYER:
+		case INITSPRITE:		
 			{
-				Sprite *spPlayer	= new Sprite();	
-				spPlayer->Init(msg.c_str(), *pSpriteResource);
-				spPlayer->SetMiniPosColor(MiniPosColor_Player);
-				vecPplayer.push_back(spPlayer);
+				Sprite * sp = CreateSprite(typeID);
+				sp->Init(msg.c_str());
+				vecpSprite.push_back(sp);
 			}
 			break;
 
 		case SPRITEDESTORYPLAYER:
-			for (iter=vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+			for (iter=vecpSprite.begin(); iter!=vecpSprite.end();iter++)
 			{
-				if ((*iter)->GetID() == id)
+				if ((*iter)->GetTypeID() == typeID && (*iter)->GetID() == id)
 				{
 					Sprite *spPlayer = *iter;
-					vecPplayer.erase(iter);
+					vecpSprite.erase(iter);
 					iter--;
 					delete spPlayer;
 				}
 			}
 		case SPRITEREVIVE:
-			for (iter=vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+			for (iter=vecpSprite.begin(); iter!=vecpSprite.end();iter++)
 			{
-				if ((*iter)->GetID() == id)
+				if ((*iter)->GetTypeID() == typeID && (*iter)->GetID() == id)
 				{
 					(*iter)->ChangeAction(STAND);
 					(*iter)->ChangePos(x, y);
+					(*iter)->RandDir();
 				}
 			}
 			break;
 			
 		case WALK:			
-			for (iter=vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+			for (iter=vecpSprite.begin(); iter!=vecpSprite.end();iter++)
 			{
-				if ((*iter)->GetID() == id)
+				if ((*iter)->GetTypeID() == typeID && (*iter)->GetID() == id)
 				{
 					(*iter)->Move(x,y);
 				}
 			}			
 			break;
 		case ATTACK:
-			for (iter=vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+			for (iter=vecpSprite.begin(); iter!=vecpSprite.end();iter++)
 			{
-				if ((*iter)->GetID() == id)
+				if ((*iter)->GetTypeID() == typeID && (*iter)->GetID() == id)
 				{
 					(*iter)->Attack(x,y);
 				}
@@ -124,9 +125,9 @@ int GameWorld::HandleMsg()
 			break;
 
 		case DIE:
-			for (iter=vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+			for (iter=vecpSprite.begin(); iter!=vecpSprite.end();iter++)
 			{
-				if ((*iter)->GetID() == id)
+				if ((*iter)->GetTypeID() == typeID && (*iter)->GetID() == id)
 				{
 					(*iter)->Die(x,y);
 				}
@@ -198,6 +199,7 @@ int GameWorld::Init(HWND hwnd)
 	::GetCurrentDirectory(64, szDir);
 	::GetPrivateProfileString("server","IP","",szIP,16,(szDir+string("/config.ini")).c_str());
 	::GetPrivateProfileString("server","port","",szPort,16,(szDir+string("/config.ini")).c_str());
+	Sprite::Load_Resource();
 
 	try
 	{
@@ -225,7 +227,7 @@ int GameWorld::Init(HWND hwnd)
 	SetBkMode(hdcCanvas,TRANSPARENT);
 
 	pMessageOut = new MessageOut(DebugOut_Width, DebugOut_Height, 12, FW_THIN);
-	
+
 	return 0;
 }
 
@@ -239,6 +241,7 @@ int GameWorld::Login()
 
 	char szData[MsgLen]={0};
 	
+	memset(szData, 0, MsgLen);
 	datasock.Receive(szData, MsgLen);
 	
 	if (strcmp(szData, "[username,password]"))
@@ -252,11 +255,9 @@ int GameWorld::Login()
 	pGameMap	= new GameMap();
 	pGameMap->Init(hdcScreen);
 
-	pSpriteResource = new SpriteResource();
-	pSpriteResource->init();
 	
 	memset(szData, 0 ,MsgLen);
-	datasock.Receive(szData, MsgLen);
+	int len = datasock.Receive(szData, MsgLen);
 	
 	if (strcmp(szData,"[user is online]")==0)
 	{
@@ -265,7 +266,7 @@ int GameWorld::Login()
 	}
 	datasock.SetBlocking(false);
 	
-	severMessageBuffer+=szData;
+	severMessageBuffer.append(szData, len);
 	
 	HandleMsg();	
 
@@ -278,22 +279,19 @@ int GameWorld::Shutdown()
 	DeleteObject(bitCanvas);
 	DeleteDC(hdcCanvas);
 
-	delete spMan;
-	spMan = NULL;
+	vector<Sprite *>::iterator itr;
+
+	for (itr = vecpSprite.begin(); itr != vecpSprite.end(); itr++)
+	{
+		delete (*itr);
+		*itr = NULL;
+	}	
 
 	delete pGameMap;
 	pGameMap = NULL;
 
 	delete pMessageOut;
 	pMessageOut = NULL;
-
-	if (pSpriteResource)
-	{
-		delete pSpriteResource;
-		pSpriteResource = NULL;
-	}	
-
-
 
 	return 0;
 }
@@ -302,18 +300,18 @@ int GameWorld::Main()
 {		
 	HandleMsg();	
 
-	if (spMan == NULL)
+	if (spMainRole == NULL)
 	{
 		return 0;
 	}
 	
 	vector<Sprite *>::iterator iter;
-	for (iter = vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+	for (iter = vecpSprite.begin(); iter!=vecpSprite.end();iter++)
 	{
 		(*iter)->Animate();
 	}
 	
-	pGameMap->MoveViewport(spMan->GetX(), spMan->GetY());
+	pGameMap->MoveViewport(spMainRole->GetX(), spMainRole->GetY());
 
 	char szDebugMessage[DebugMsgLen]={0};
 	sprintf(szDebugMessage, "Viewport X:%d, Y:%d",ViewportPos_x,ViewportPos_y);
@@ -321,20 +319,19 @@ int GameWorld::Main()
 	
 	pGameMap->Draw(hdcCanvas);
 	
-	for (iter = vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+	for (iter = vecpSprite.begin(); iter!=vecpSprite.end();iter++)
 	{
 		(*iter)->Draw(hdcCanvas);
 
-		if ((*iter)->GetID() == spMan->GetID())
+		if ((*iter)->GetTypeID()==spMainRole->GetTypeID() && (*iter)->GetID() == spMainRole->GetID())
 		{
-			sprintf(szDebugMessage, "AnimIndex:%d, FrameNum :%d",spMan->GetAnimIndex(),spMan->GetFrameNum());
+			sprintf(szDebugMessage, "AnimIndex:%d, FrameNum :%d",spMainRole->GetAnimIndex(),spMainRole->GetFrameNum());
 			vecDebugMessage[DebugMsg_Index_Animat]=szDebugMessage;
 		}
 		
 	}	
 
-
-	pGameMap->DrawMini(hdcCanvas, vecPplayer);
+	pGameMap->DrawMini(hdcCanvas, vecpSprite);
 	Refresh();
 	GenerateMsg();
 	return 0;
@@ -357,12 +354,13 @@ void GameWorld::FixToGrid(Sprite * spMan, int & x, int & y)
 
 int GameWorld::GenerateMsg()
 {
-	if (spMan->NeedRevive())
-	{
-		char szMessage[MsgLen]={0};
-		sprintf(szMessage, "%d,%d,%d,%d,%d", spMan->GetID(), SPRITEREVIVE, 0, 320, 240);
-		SendMsg(szMessage);	
-	}
+// 	if (spMainRole->NeedRevive())
+// 	{
+// 		char szMessage[MsgLen]={0};
+// 		sprintf(szMessage, "%d,%d,%d,%d,%d,%d,%d,%d", 
+// 				spMainRole->GetTypeID(), spMainRole->GetID(), spMainRole->GetStatu(), SPRITEREVIVE, 0, 0, 320, 240);
+// 		SendMsg(szMessage);	
+// 	}
 
 	return 0;
 }
@@ -381,19 +379,22 @@ void GameWorld::SetMessageFromInput(UINT msg, int x, int y)
 	switch (msg)
 	{
 		case WM_LBUTTONDOWN:
-			if (spMan->AnimationBegin() || spMan->GetAction() == STAND)
+			if (spMainRole->AnimationBegin() || spMainRole->GetAction() == STAND)
 			{
-				FixToGrid(spMan, x, y);
+				FixToGrid(spMainRole, x, y);
 
-				int idTarget = haveSprite(x, y);
-
-				if (idTarget>0)
+				Sprite* pTarget = haveSprite(x, y);
+				//typeid, id, statu, action, targetTypeID, targetid, x, y
+				if (pTarget)
 				{
-					sprintf(szMessage, "%d,%d,%d,%d,%d", spMan->GetID(), ATTACK, idTarget, x, y);
+					sprintf(szMessage, "%d,%d,%d,%d,%d,%d,%d,%d", 
+							spMainRole->GetTypeID() ,spMainRole->GetID(), spMainRole->GetStatu(), ATTACK, 
+							pTarget->GetTypeID(), pTarget->GetID(), x, y);
 				}
 				else
 				{
-					sprintf(szMessage, "%d,%d,%d,%d,%d", spMan->GetID(), WALK, 0, x, y);
+					sprintf(szMessage, "%d,%d,%d,%d,%d,%d,%d,%d", 
+							spMainRole->GetTypeID(), spMainRole->GetID(), spMainRole->GetStatu(), WALK, 0, 0, x, y);
 				}
 			}			
 
@@ -404,19 +405,22 @@ void GameWorld::SetMessageFromInput(UINT msg, int x, int y)
 	SendMsg(szMessage);	
 }
 
-int GameWorld::haveSprite(int x, int y)
+Sprite* GameWorld::haveSprite(int x, int y)
 {
 	// it will be replaced of find_if late
 	vector<Sprite *>::iterator iter;
-	for (iter = vecPplayer.begin(); iter!=vecPplayer.end();iter++)
+	for (iter = vecpSprite.begin(); iter!=vecpSprite.end();iter++)
 	{
-		if ((*iter)->GetID()!= spMan->GetID() && (*iter)->GetX() == x && (*iter)->GetY()==y)
+		if ( (*iter)->GetAction() != DIE
+			&& (*iter)->GetStatu() != STATU_dormant
+			&& ((*iter)->GetTypeID()!=spMainRole->GetTypeID() || (*iter)->GetID()!= spMainRole->GetID()) 
+			&& (*iter)->GetX() == x && (*iter)->GetY()==y)
 		{
-			return (*iter)->GetID();
+			return (*iter);
 		}
 	}
 	
-	return 0;
+	return NULL;
 }
 
 int GameWorld::DebugOut()
@@ -424,4 +428,20 @@ int GameWorld::DebugOut()
 	pMessageOut->Draw(hdcCanvas, vecDebugMessage, DebugOut_X ,DebugOut_Y);
 
 	return 0;
+}
+
+Sprite * GameWorld::CreateSprite(int TypeID)
+{
+	switch (TypeID)
+	{
+	case OBJ_Player:
+		return new Player();
+		break;
+	case OBJ_wolf:
+		return new wolf();
+		break;
+	default:
+		return NULL;
+		break;
+	}	
 }

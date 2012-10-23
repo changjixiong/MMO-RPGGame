@@ -19,6 +19,8 @@ class GameMap;
 class Sprite;
 class SpriteResource;
 class MessageOut;
+class Player;
+class wolf;
 
 using namespace std;
 
@@ -49,9 +51,8 @@ enum Action
 	WALK=8,
 	ATTACK=16,
 	DIE = 24,
-
-	SPRITEINITROLE =1,
-	SPRITEINITPLAYER =2,
+	INITMAINROLE =1,
+	INITSPRITE =2,
 	SPRITEDESTORYPLAYER=3,
 	SPRITEREVIVE=4,
 
@@ -59,13 +60,26 @@ enum Action
 
 enum MiniPosColor
 {
-	MiniPosColor_Role = RGB(0xff,0xff,0xff),
-	MiniPosColor_Player = RGB(0,0,255),
+	MiniPosColor_Role	= RGB(0xff, 0xff, 0xff),	
+	MiniPosColor_Player	= RGB(0, 0, 0xff),
+	MiniPosColor_animal	= RGB(0xff, 0, 0)
 };
 
 enum RoleInfoColor
 {
 	RoleNormal = RGB(0xff, 0xff,0xff)
+};
+
+enum OBJ_TYPE
+{
+	OBJ_Player =1,
+	OBJ_wolf = 2,
+};
+
+enum OBJ_STATU
+{
+	STATU_dormant = 0,
+    STATU_normal = 1,
 };
 
 class GameWorld
@@ -85,7 +99,8 @@ protected:
 private:
 
 	GameMap *pGameMap;
-	Sprite	*spMan;
+	Sprite	*spMainRole;
+
 	
 	HDC		hdcCanvas;
 	HBITMAP	bitCanvas;
@@ -94,18 +109,18 @@ private:
 private:
 	int Refresh();
 	void FixToGrid(Sprite * spMan, int & x, int & y);
-	int haveSprite(int x, int y);
+	Sprite* haveSprite(int x, int y);
 	int HandleMsg();	
 	int DebugOut();
 	int SendMsg(const string & strMsg);
 	int Login();
 	int GenerateMsg();
+	Sprite * GameWorld::CreateSprite(int TypeID);
 
 	vector<string> vecDebugMessage;
-	vector<Sprite *> vecPplayer;
+	vector<Sprite *> vecpSprite;
 	SocketLib::DataSocket datasock;
 	string severMessageBuffer;
-	SpriteResource *pSpriteResource;
 
 	MessageOut *pMessageOut;
 	

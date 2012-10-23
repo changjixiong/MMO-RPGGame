@@ -19,7 +19,7 @@ public:
 	int Init(HDC hdcScreen);
 	int Draw(HDC hdcDest);
 	void MoveViewport(int roleX, int roleY);
-	void DrawMini(HDC hdcDest, const vector<Sprite *> & vecPplayer);
+	void DrawMini(HDC hdcDest, const vector<Sprite *> & vecpSprite);
 protected:
 	MyBitMap * pMap;
 	HDC		hdcMiniMap;

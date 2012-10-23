@@ -116,7 +116,7 @@ void GameMap::MoveViewport(int roleX, int roleY)
 };
 
 
-void GameMap::DrawMini(HDC hdcDest, const vector<Sprite *> & vecPplayer)
+void GameMap::DrawMini(HDC hdcDest, const vector<Sprite *> & vecpSprite)
 {
  	::MoveToEx(hdcDest, GAME_WIDTH - miniMap_Width -1, 0, NULL);
  	::LineTo(hdcDest, GAME_WIDTH - miniMap_Width -1, miniMap_Height+1);
@@ -130,8 +130,12 @@ void GameMap::DrawMini(HDC hdcDest, const vector<Sprite *> & vecPplayer)
 			SRCCOPY);
 
 	vector<Sprite *>::const_iterator itr;
-	for (itr=vecPplayer.begin();itr!=vecPplayer.end();itr++)
-	{
+	for (itr=vecpSprite.begin();itr!=vecpSprite.end();itr++)
+	{		
+		if ((*itr)->GetStatu() == STATU_dormant)
+		{
+			continue;
+		}
 		
 		int x = GAME_WIDTH - miniMap_Width + (*itr)->GetX()/16;
 		int y = (*itr)->GetY()/16;
